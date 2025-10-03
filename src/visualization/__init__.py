@@ -1,3 +1,3 @@
-from.visualization import Visualization
+from.visualization import Visualization, Button
 
-__all__ = ["Visualization"]
+__all__ = ["Visualization", "Button"]

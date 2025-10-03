@@ -14,14 +14,17 @@ class PatrollingACO:
         self.tabu_lists = [[] for _ in range(num_agents)]
         self.step_count = 0
 
+    # Update idleness for all cells
     def update_idleness(self):
         self.idleness += 0.1
 
+    # Evaporate pheromone and add random noise
     def update_pheromone(self):
         self.evaporation_rate = min(self.evaporation_rate + 0.0005, 0.5)
         self.pheromone *= (1 - self.evaporation_rate)
         self.pheromone += np.random.uniform(0, 0.01, self.pheromone.shape)
 
+    # Move agents based on pheromone and idleness
     def move_agents(self):
         for i, (x, y) in enumerate(self.agents):
             if random.random() < 0.05:
@@ -73,6 +76,7 @@ class PatrollingACO:
             if len(self.tabu_lists[i]) > 5:
                 self.tabu_lists[i].pop(0)
 
+    # New method to run a single step of the ACO algorithm
     def run_step(self):
         self.update_idleness()
         self.move_agents()
