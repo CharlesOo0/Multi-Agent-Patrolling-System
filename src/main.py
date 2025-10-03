@@ -41,7 +41,6 @@ def main():
             viz.buttons_event(event)
             if event.type == pygame.QUIT:
                 running = False
-
     
     viz.terminate()
 

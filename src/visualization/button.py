@@ -37,14 +37,17 @@ class Button:
         return False
     
     def quit_button_event(self,event):
-        if self.check_hover(pygame.mouse.get_pos()):
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
-            
-        if not self.check_hover(pygame.mouse.get_pos()):
-            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
+        self.hover_property(event)
             
         if event.type == pygame.MOUSEBUTTONDOWN:
             mouse_pos = pygame.mouse.get_pos()
             if self.is_clicked(mouse_pos, event):
                 pygame.quit()
                 sys.exit()
+                
+    def hover_property(self,event):
+        if self.check_hover(pygame.mouse.get_pos()):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_HAND)
+            
+        if not self.check_hover(pygame.mouse.get_pos()):
+            pygame.mouse.set_cursor(pygame.SYSTEM_CURSOR_ARROW)
