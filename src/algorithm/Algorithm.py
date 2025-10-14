@@ -37,7 +37,10 @@ class Algorithm(ABC):
         Execute one step of the algorithm.
         This method must be implemented by each specific algorithm.
         """
-        self.update_idleness()
+        # Update idleness for all cells
+        self.idleness += 0.1
+
+        self.step_count += 1
     
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
         """
@@ -46,16 +49,21 @@ class Algorithm(ABC):
         Returns:
             List of tuples representing initial positions of agents.
         """
+        # Check if there are enough cells for all agents
+        if self.num_agents > self.width * self.height:
+            # Fallback: reduce agents to fit in the grid
+            self.num_agents = self.width * self.height
+            print(f"Warning: Reduced number of agents to {self.num_agents} to fit in the grid.")
+
         positions = []
+
         for _ in range(self.num_agents):
-            x = random.randint(0, self.width - 1)
-            y = random.randint(0, self.height - 1)
-            positions.append((x, y))
-        return positions
-    
-    def update_idleness(self):
-        """
-        Increment the idleness of all cells in the map.
-        """
-        self.idleness += 0.1
-        self.step_count += 1
+            # Make sure agents dont start on the same cell
+            while True:
+                x = random.randint(0, self.width - 1)
+                y = random.randint(0, self.height - 1)
+                if (x, y) not in positions:
+                    positions.append((x, y))
+                    break
+
+        return positions     
