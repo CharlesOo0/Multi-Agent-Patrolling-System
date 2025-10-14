@@ -1,20 +1,22 @@
 import pygame
 import time
 import numpy as np
-from src.algorithm import *
+from algorithm import AntColony
 from visualization import Visualization
 
 def main():
 
-    map_size = (20, 20)
+    # Parameters
+    MAP_SIZE = (20, 20)
+    SPEED = 10  # Steps per second
 
     # Initialize Visualization
     DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
-    viz = Visualization(DISPLAYSURF.get_size(), map_size)
+    viz = Visualization(DISPLAYSURF.get_size(), MAP_SIZE)
 
     # Initialize ACO
     num_agents = 7
-    aco = AntColony(map_size, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
+    aco = AntColony(MAP_SIZE, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
 
     # Main loop
     running = True
@@ -26,7 +28,7 @@ def main():
         viz.display_timer(elapsed_time)
 
         pygame.display.flip() # Update the full display
-        viz.clock.tick(10)  # 10 steps per second
+        viz.clock.tick(SPEED) # Control the frame rate
 
         for event in pygame.event.get():
             viz.buttons_event(event)

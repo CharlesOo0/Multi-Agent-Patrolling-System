@@ -1,18 +1,16 @@
 import numpy as np
 import random
+from .Algorithm import Algorithm
 
-class PatrollingACO:
+class AntColony(Algorithm):
     def __init__(self, map_size, num_agents, evaporation_rate=0.1, alpha=1, beta=2):
-        self.map_size = map_size
-        self.num_agents = num_agents
+        super().__init__(map_size, num_agents)
         self.evaporation_rate = evaporation_rate
         self.alpha = alpha
         self.beta = beta
         self.pheromone = np.ones(map_size)
-        self.idleness = np.zeros(map_size)
-        self.agents = [(random.randint(0, map_size[0]-1), random.randint(0, map_size[1]-1)) for _ in range(num_agents)]
+        
         self.tabu_lists = [[] for _ in range(num_agents)]
-        self.step_count = 0
 
     # Update idleness for all cells
     def update_idleness(self):
@@ -78,7 +76,6 @@ class PatrollingACO:
 
     # New method to run a single step of the ACO algorithm
     def run_step(self):
-        self.update_idleness()
+        super().run_step()
         self.move_agents()
         self.update_pheromone()
-        self.step_count += 1
