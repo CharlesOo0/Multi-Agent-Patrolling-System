@@ -1,4 +1,5 @@
 from typing import Tuple
+import numpy as np
 from algorithm import Algorithm
 
 class Heuristic(Algorithm):
@@ -6,8 +7,8 @@ class Heuristic(Algorithm):
     A simple heuristic-based multi-agent patrolling algorithm.
     This class implements a basic heuristic approach for agent movement and patrolling.
     """
-    def __init__(self, map_size: Tuple[int, int], num_agents: int):
-        super().__init__(map_size, num_agents)
+    def __init__(self, map: np.ndarray, num_agents: int):
+        super().__init__(map, num_agents)
         self.clusters = self._map_clustering()
 
 
@@ -18,7 +19,7 @@ class Heuristic(Algorithm):
         """
         # Cluster the map into regions and assign agents to clusters
         clusters = []
-        cluster_size = (self.map_size[0] // self.num_agents, self.map_size[1] // self.num_agents)
+        cluster_size = (self.map.shape[0] // self.num_agents, self.map.shape[1] // self.num_agents)
         
         for i in range(self.num_agents):
             cluster = (i * cluster_size[0], i * cluster_size[1], cluster_size[0], cluster_size[1])
@@ -36,7 +37,7 @@ class Heuristic(Algorithm):
             # Get the cluster boundaries
             neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
             neighbors = [(nx, ny) for nx, ny in neighbors
-                         if 0 <= nx < self.map_size[0] and 0 <= ny < self.map_size[1]]
+                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1]]
 
             if not neighbors:
                 continue

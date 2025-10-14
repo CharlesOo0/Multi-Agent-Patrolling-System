@@ -7,17 +7,39 @@ from visualization import Visualization
 def main():
 
     # Parameters
+    MAP: np.ndarray = np.array([
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0],
+        [0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],
+        [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
+    ], dtype=int)
     MAP_SIZE = (20, 20)
     SPEED = 10  # Steps per second
 
     # Initialize Visualization
     DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
-    viz = Visualization(DISPLAYSURF.get_size(), MAP_SIZE)
+    viz = Visualization(DISPLAYSURF.get_size(), MAP)
 
     # Initialize Algorithm
     num_agents = 4
-    # algorithm = AntColony(MAP_SIZE, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
-    algorithm = Heuristic(MAP_SIZE, num_agents)
+    algorithm = AntColony(MAP, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
+    # algorithm = Heuristic(MAP, num_agents)
 
     # Main loop
     running = True

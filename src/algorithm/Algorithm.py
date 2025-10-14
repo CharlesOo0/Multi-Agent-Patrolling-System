@@ -1,28 +1,28 @@
 from abc import ABC, abstractmethod
 import numpy as np
 import random
-from typing import List, Tuple, Optional, Dict, Any
+from typing import List, Tuple
 
 class Algorithm(ABC):
     """
     Abstract base class for multi-agent patrolling algorithms.
     Defines the common interface and shared functionality for all patrolling algorithms.
     """
-    
-    def __init__(self, map_size: Tuple[int, int], num_agents: int, **kwargs):
+
+    def __init__(self, map: np.ndarray, num_agents: int, **kwargs):
         """
         Initialize the algorithm with basic parameters.
         
         Args:
-            map_size: Tuple representing (width, height) of the patrol area
+            map: 2D numpy array representing the patrol area
             num_agents: Number of agents in the system
             **kwargs: Additional algorithm-specific parameters
         """
-        self.map_size = map_size
+        self.map = map
         self.num_agents = num_agents
-        self.width, self.height = map_size
-        self.idleness = np.zeros(map_size)
-        
+        self.width, self.height = map.shape
+        self.idleness = np.zeros((self.width, self.height))
+
         # Initialize agent positions
         self.agents = self._initialize_agent_positions()
         

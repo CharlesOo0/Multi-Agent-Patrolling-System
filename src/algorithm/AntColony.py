@@ -3,18 +3,14 @@ import random
 from .Algorithm import Algorithm
 
 class AntColony(Algorithm):
-    def __init__(self, map_size, num_agents, evaporation_rate=0.1, alpha=1, beta=2):
-        super().__init__(map_size, num_agents)
+    def __init__(self, map: np.ndarray, num_agents: int, evaporation_rate=0.1, alpha=1, beta=2):
+        super().__init__(map, num_agents)
         self.evaporation_rate = evaporation_rate
         self.alpha = alpha
         self.beta = beta
-        self.pheromone = np.ones(map_size)
+        self.pheromone = np.ones(map.shape)
         
         self.tabu_lists = [[] for _ in range(num_agents)]
-
-    # Update idleness for all cells
-    def update_idleness(self):
-        self.idleness += 0.1
 
     # Evaporate pheromone and add random noise
     def update_pheromone(self):
@@ -28,7 +24,7 @@ class AntColony(Algorithm):
             if random.random() < 0.05:
                 neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
                 neighbors = [(nx, ny) for nx, ny in neighbors
-                             if 0 <= nx < self.map_size[0] and 0 <= ny < self.map_size[1]]
+                             if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1]]
                 if neighbors:
                     new_pos = random.choice(neighbors)
                     self.agents[i] = new_pos
@@ -41,7 +37,7 @@ class AntColony(Algorithm):
 
             neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
             neighbors = [(nx, ny) for nx, ny in neighbors
-                         if 0 <= nx < self.map_size[0] and 0 <= ny < self.map_size[1]
+                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1]
                          and (nx, ny) not in self.tabu_lists[i]]
 
             if not neighbors:
