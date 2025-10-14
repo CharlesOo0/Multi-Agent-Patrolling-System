@@ -31,6 +31,7 @@ def main():
     while running:
         algorithm.run_step()
         viz.update_visuals(algorithm)
+        
         # Display timer
         elapsed_time = time.time() - viz.start_time
         viz.display_timer(elapsed_time)

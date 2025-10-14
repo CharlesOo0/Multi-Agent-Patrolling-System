@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import numpy as np
 import random
 from typing import List, Tuple
+from events import EventManager
 
 class Algorithm(ABC):
     """Abstract base class for multi-agent patrolling algorithms.
@@ -27,6 +28,11 @@ class Algorithm(ABC):
         # Initialize agent positions
         self.agents = self._initialize_agent_positions()
         
+        # Events manager (CS:GO-like) to influence idleness each step
+        self.events = EventManager(
+            spawn_prob=kwargs.get("event_spawn_prob", 0.05)
+        )
+        
         # Tracking variables
         self.step_count = 0
         self.total_coverage = 0.0
@@ -42,6 +48,10 @@ class Algorithm(ABC):
         # Update idleness for all cells
         self.idleness += 0.1
         self.step_count += 1
+        
+        # Possibly spawn an event and then apply active events effects
+        self.events.maybe_spawn_event(self.map)
+        self.events.apply_events(self.idleness)
     
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
         """Randomly initialize unique agent positions on free cells within bounds.

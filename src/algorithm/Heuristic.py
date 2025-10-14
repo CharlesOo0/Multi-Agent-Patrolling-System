@@ -8,14 +8,14 @@ class Heuristic(Algorithm):
     Agents greedily select an adjacent cell with the highest idleness within the
     valid neighborhood, avoiding obstacles.
     """
-    def __init__(self, map: np.ndarray, num_agents: int):
+    def __init__(self, map: np.ndarray, num_agents: int, **kwargs):
         """Initialize the heuristic algorithm and precompute clusters.
 
         Args:
             map: 2D numpy array where 0=free cell and 1=obstacle.
             num_agents: Number of patrolling agents.
         """
-        super().__init__(map, num_agents)
+        super().__init__(map, num_agents, **kwargs)
         self.clusters = self._map_clustering()
 
 

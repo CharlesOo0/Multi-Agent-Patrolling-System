@@ -9,7 +9,7 @@ class AntColony(Algorithm):
     and cell idleness. Pheromones evaporate over time to avoid stagnation.
     """
 
-    def __init__(self, map: np.ndarray, num_agents: int, evaporation_rate=0.1, alpha=1, beta=2):
+    def __init__(self, map: np.ndarray, num_agents: int, evaporation_rate=0.1, alpha=1, beta=2, **kwargs):
         """Initialize the ACO algorithm state.
 
         Args:
@@ -19,7 +19,7 @@ class AntColony(Algorithm):
             alpha: Exponent controlling the influence of pheromone.
             beta: Exponent controlling the influence of idleness.
         """
-        super().__init__(map, num_agents)
+        super().__init__(map, num_agents, **kwargs)
         self.evaporation_rate = evaporation_rate
         self.alpha = alpha
         self.beta = beta
