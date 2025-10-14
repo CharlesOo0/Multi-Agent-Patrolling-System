@@ -3,7 +3,7 @@ import time
 import numpy as np
 from algorithm import AntColony, Heuristic
 from visualization import Visualization
-from maps.maps import DUST2
+from maps.MapLoader import MapLoader
 
 """Entry point for running the multi-agent patrolling visualization demo.
 
@@ -19,12 +19,16 @@ def main():
 
     # Initialize Visualization
     DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
-    viz = Visualization(DISPLAYSURF.get_size(), DUST2)
+
+    # Load map from JSON (DUST2 by default). Use "DEFAULT_MAP" to switch.
+    loader = MapLoader()
+    MAP = loader.load("DUST2")
+    viz = Visualization(DISPLAYSURF.get_size(), MAP)
 
     # Initialize Algorithm
     num_agents = 4
     # algorithm = AntColony(MAP, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
-    algorithm = Heuristic(DUST2, num_agents, simulation_speed=SIMULATION_SPEED, event_spawn_prob=0.1)
+    algorithm = Heuristic(MAP, num_agents, simulation_speed=SIMULATION_SPEED, event_spawn_prob=0.1)
 
     # Main loop
     running = True
