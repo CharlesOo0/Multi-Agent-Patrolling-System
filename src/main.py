@@ -8,6 +8,7 @@ def main():
     # Constants
     DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
     
+    # Possible utilisation 
     WINDOW_SIZE = (900, 900)
     TARGET_STEPS = 900  # 1 minute 30 seconds at 10 steps per second
 
