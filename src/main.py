@@ -14,9 +14,6 @@ window to render agent movement and idleness heatmap in real time.
 def main():
     """Run the main application loop: init, step algorithm, and render frames."""
 
-    # Parameters
-    SIMULATION_SPEED = 10  # Steps per second
-
     # Initialize Visualization
     DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
 
@@ -28,7 +25,10 @@ def main():
     # Initialize Algorithm
     num_agents = 4
     # algorithm = AntColony(MAP, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
-    algorithm = Heuristic(MAP, num_agents, simulation_speed=SIMULATION_SPEED, event_spawn_prob=0.1)
+    algorithm = Heuristic(MAP, num_agents, simulation_speed=viz.sim_speed, event_spawn_prob=0.1)
+
+    # Ensure algorithm stays in sync if UI changed speed before first frame
+    algorithm.set_simulation_speed(viz.sim_speed)
 
     # Main loop
     running = True
@@ -40,9 +40,11 @@ def main():
                 viz.buttons_event(event, algorithm)
 
         algorithm.run_step()
+        # Advance simulated timer by one tick's worth
+        viz.advance_sim_time_per_tick()
         viz.update_visuals(algorithm)
 
-        viz.clock.tick(SIMULATION_SPEED) # Control the frame rate
+        viz.clock.tick(int(viz.sim_speed)) # Control the frame rate using current speed
 
     viz.terminate()
 

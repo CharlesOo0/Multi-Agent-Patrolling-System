@@ -46,6 +46,12 @@ class Visualization:
         self.font: pygame.font.Font = pygame.font.SysFont(None, 36)
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.start_time: float = time.time()
+        # Simulation timing: speed (ticks/sec) and simulated time accumulator
+        self.sim_speed: float = 10.0
+        self.base_speed: float = self.sim_speed  # reference to scale simulated time
+        self.min_speed: float = 10.0
+        self.max_speed: float = 240.0
+        self.sim_time: float = 0.0
 
         # Compute layout rects (grid centered in left content area)
         self._recompute_layout(win_w, win_h)
@@ -53,6 +59,8 @@ class Visualization:
         # Buttons
         self.quit_button: Button | None = None
         self.reset_button: Button | None = None
+        self.speed_dec_button: Button | None = None
+        self.speed_inc_button: Button | None = None
 
     def _recompute_layout(self, win_w: int, win_h: int) -> None:
         """Recompute layout rectangles and grid origin based on window size."""
@@ -163,15 +171,16 @@ class Visualization:
             )
 
     def display_timer(self, elapsed_time: float) -> None:
-        """Render and display the elapsed time in the bottom bar.
+        """Render and display the simulated elapsed time in the bottom bar.
 
         Args:
-            elapsed_time: Time in seconds since visualization start.
+            elapsed_time: Wall-clock seconds since visualization start.
         """
-        # mm:ss
-        mm = int(elapsed_time // 60)
-        ss = int(elapsed_time % 60)
-        timer_text = self.font.render(f"Temps: {mm:02d}:{ss:02d}", True, self.utils.BLACK)
+        # Show simulated time (scaled by sim_speed) in mm:ss
+        sim_secs = int(self.sim_time)
+        mm = sim_secs // 60
+        ss = sim_secs % 60
+        timer_text = self.font.render(f"Temps (x{self.sim_speed:.1f}): {mm:02d}:{ss:02d}", True, self.utils.BLACK)
         # Positionné dans la barre inférieure (aligné à gauche, centré verticalement)
         x = self.bottom_bar_rect.left + 10
         y = self.bottom_bar_rect.centery - timer_text.get_height() // 2
@@ -186,16 +195,25 @@ class Visualization:
         self.display_buttons()
         pygame.display.flip()
 
+    def advance_sim_time_per_tick(self) -> None:
+        """Advance simulated time by a fixed amount per tick based on base speed.
+
+        With increment 1/base_speed, the simulated seconds per real second
+        become sim_speed/base_speed when running one tick per frame.
+        """
+        self.sim_time += 1.0 / max(self.base_speed, 0.1)
+
     def terminate(self) -> None:
         """Terminate pygame and exit the process cleanly."""
         pygame.quit()
         sys.exit()
 
     def display_buttons(self) -> None:
-        """Create and draw Reset and Quit buttons in the bottom bar."""
+        """Create and draw speed controls, Reset and Quit buttons in the bottom bar."""
         BUTTON_HEIGHT: int = 40
         BUTTON_WIDTH: int = 150
         GAP: int = 10
+        SMALL_W: int = 48
 
         # Quit button (right)
         qx = self.bottom_bar_rect.right - BUTTON_WIDTH - GAP
@@ -223,6 +241,37 @@ class Visualization:
             self.utils.LIGHT_GRAY,
         )
         self.reset_button.draw(self.screen)
+
+        # Speed controls group placed to the left of Reset button
+        label_font = pygame.font.SysFont(None, 28)
+        label = label_font.render(f"Vitesse: {self.sim_speed:.1f} tps", True, self.utils.BLACK)
+        group_width = SMALL_W + 8 + SMALL_W + 16 + label.get_width()
+        sx = rx - GAP - group_width
+
+        self.speed_dec_button = Button(
+            sx,
+            by,
+            SMALL_W,
+            BUTTON_HEIGHT,
+            "-",
+            self.utils.GRAY,
+            self.utils.LIGHT_GRAY,
+        )
+        self.speed_dec_button.draw(self.screen)
+
+        self.speed_inc_button = Button(
+            sx + SMALL_W + 8,
+            by,
+            SMALL_W,
+            BUTTON_HEIGHT,
+            "+",
+            self.utils.GRAY,
+            self.utils.LIGHT_GRAY,
+        )
+        self.speed_inc_button.draw(self.screen)
+
+        # Speed label showing current ticks per second
+        self.screen.blit(label, (sx + 2 * SMALL_W + 16, by + (BUTTON_HEIGHT - label.get_height()) // 2))
 
     def display_logs_panel(self, algorithm: Algorithm) -> None:
         """Draw the event logs panel on the right side with colored entries."""
@@ -264,8 +313,8 @@ class Visualization:
             self._recompute_layout(event.w, event.h)
             return
 
-        # Hover cursor for both buttons
-        for btn in (self.reset_button, self.quit_button):
+        # Hover cursor for all buttons
+        for btn in (self.reset_button, self.quit_button, self.speed_dec_button, self.speed_inc_button):
             if btn:
                 btn.hover_property(event)
 
@@ -276,9 +325,28 @@ class Visualization:
                 self.reset_simulation(algorithm)
             if self.quit_button and self.quit_button.is_clicked(mouse_pos, event):
                 self.terminate()
+            if self.speed_dec_button and self.speed_dec_button.is_clicked(mouse_pos, event):
+                self._adjust_speed(-1.0, algorithm)
+            if self.speed_inc_button and self.speed_inc_button.is_clicked(mouse_pos, event):
+                self._adjust_speed(+1.0, algorithm)
 
     def reset_simulation(self, algorithm: Algorithm) -> None:
         """Reset algorithm state, timer, and clear logs."""
         if hasattr(algorithm, "reset"):
             algorithm.reset()
         self.start_time = time.time()
+        self.sim_time = 0.0
+
+    def _adjust_speed(self, delta: float, algorithm: Algorithm) -> None:
+        """Increment/decrement simulation speed with clamping, update algorithm.
+
+        Args:
+            delta: Signed increment in ticks per second (e.g., -1 or +1).
+            algorithm: Algorithm instance to synchronize speed-dependent params.
+        """
+        new_speed = max(self.min_speed, min(self.max_speed, self.sim_speed + delta))
+        # Snap to 0.5 steps for finer control
+        new_speed = round(new_speed * 2) / 2.0
+        self.sim_speed = new_speed
+        
+        algorithm.set_simulation_speed(self.sim_speed)

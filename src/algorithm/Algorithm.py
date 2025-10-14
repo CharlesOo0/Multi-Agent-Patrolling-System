@@ -31,9 +31,14 @@ class Algorithm(ABC):
         # Initialize agent positions
         self.agents = self._initialize_agent_positions()
         
+        # Simulation speed and events configuration
+        self.simulation_speed: float = float(kwargs.get("simulation_speed", 1.0))
+        self.base_event_spawn_prob: float = float(kwargs.get("event_spawn_prob", 0.05))
+
         # Events manager (CS:GO-like) to influence idleness each step
+        # Scale spawn probability inverse to simulation speed so real-time rate stays stable
         self.events = EventManager(
-            spawn_prob=kwargs.get("event_spawn_prob", 0.05)/kwargs.get("simulation_speed", 1.0)
+            spawn_prob=self.base_event_spawn_prob / max(self.simulation_speed, 0.1)
         )
         
         # Tracking variables
@@ -77,12 +82,25 @@ class Algorithm(ABC):
         """Reset algorithm internal state for a fresh run (used by UI Reset)."""
         self.idleness = np.zeros((self.width, self.height))
         self.agents = self._initialize_agent_positions()
-        self.events = EventManager(spawn_prob=self.events.spawn_prob)
+        # Recreate EventManager with spawn prob matching current simulation speed
+        self.events = EventManager(
+            spawn_prob=self.base_event_spawn_prob / max(self.simulation_speed, 0.1)
+        )
         self.step_count = 0
         self.total_coverage = 0.0
         self.visited_cells.clear()
         self.event_history.clear()
     
+    def set_simulation_speed(self, speed: float) -> None:
+        """Update simulation speed and adjust event spawn rate accordingly.
+
+        Args:
+            speed: Desired ticks per second (>0). Values are clamped to [0.1, +inf).
+        """
+        self.simulation_speed = max(0.1, float(speed))
+        # Keep roughly constant events per real second by inversely scaling per-tick prob
+        self.events.spawn_prob = self.base_event_spawn_prob / self.simulation_speed
+
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
         """Randomly initialize unique agent positions on free cells within bounds.
 
