@@ -1,7 +1,7 @@
 import pygame
 import time
 import numpy as np
-from algorithm import AntColony
+from algorithm import AntColony, Heuristic
 from visualization import Visualization
 
 def main():
@@ -14,15 +14,16 @@ def main():
     DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
     viz = Visualization(DISPLAYSURF.get_size(), MAP_SIZE)
 
-    # Initialize ACO
-    num_agents = 7
-    aco = AntColony(MAP_SIZE, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
+    # Initialize Algorithm
+    num_agents = 4
+    # algorithm = AntColony(MAP_SIZE, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
+    algorithm = Heuristic(MAP_SIZE, num_agents)
 
     # Main loop
     running = True
     while running:
-        aco.run_step()
-        viz.update_visuals(aco)
+        algorithm.run_step()
+        viz.update_visuals(algorithm)
         # Display timer
         elapsed_time = time.time() - viz.start_time
         viz.display_timer(elapsed_time)

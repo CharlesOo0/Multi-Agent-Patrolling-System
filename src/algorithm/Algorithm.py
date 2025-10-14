@@ -39,7 +39,6 @@ class Algorithm(ABC):
         """
         # Update idleness for all cells
         self.idleness += 0.1
-
         self.step_count += 1
     
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
