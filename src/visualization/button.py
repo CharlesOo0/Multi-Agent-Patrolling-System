@@ -1,6 +1,6 @@
 import sys
 import pygame
-from.utils import viz_utils
+from .utils import viz_utils
 
 class Button:
     def __init__(self, x, y, width, height, text, color, hover_color):

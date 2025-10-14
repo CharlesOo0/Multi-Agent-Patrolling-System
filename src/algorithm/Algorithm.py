@@ -19,6 +19,9 @@ class Algorithm(ABC):
             map: 2D numpy array representing the patrol area (0=free, 1=obstacle).
             num_agents: Number of agents in the system.
             **kwargs: Additional algorithm-specific parameters (ignored by base).
+                - event_spawn_prob: Probability of spawning an event each step (default 0.05).
+                - simulation_speed: Speed multiplier for event effects (default 1.0).
+
         """
         self.map = map
         self.num_agents = num_agents
@@ -30,13 +33,31 @@ class Algorithm(ABC):
         
         # Events manager (CS:GO-like) to influence idleness each step
         self.events = EventManager(
-            spawn_prob=kwargs.get("event_spawn_prob", 0.05)
+            spawn_prob=kwargs.get("event_spawn_prob", 0.05)/kwargs.get("simulation_speed", 1.0)
         )
         
         # Tracking variables
         self.step_count = 0
         self.total_coverage = 0.0
         self.visited_cells = set()
+
+        # History for visualization logs panel
+        self.event_history: List[dict] = []
+
+    def _run_event_step(self) -> None:
+        """Handle event spawning and apply their effects on idleness."""
+        spawned = self.events.maybe_spawn_event(self.map)
+        if spawned is not None:
+            # Log event with metadata
+            self.event_history.append({
+                "step": self.step_count,
+                "type": spawned.type,
+                "position": spawned.position,
+                "magnitude": float(spawned.magnitude),
+                "radius": int(spawned.radius),
+                "ttl": int(spawned.ttl),
+            })
+        self.events.apply_events(self.idleness)
     
     @abstractmethod
     def run_step(self) -> None:
@@ -49,9 +70,18 @@ class Algorithm(ABC):
         self.idleness += 0.1
         self.step_count += 1
         
-        # Possibly spawn an event and then apply active events effects
-        self.events.maybe_spawn_event(self.map)
-        self.events.apply_events(self.idleness)
+        # Apply events effects
+        self._run_event_step()
+
+    def reset(self) -> None:
+        """Reset algorithm internal state for a fresh run (used by UI Reset)."""
+        self.idleness = np.zeros((self.width, self.height))
+        self.agents = self._initialize_agent_positions()
+        self.events = EventManager(spawn_prob=self.events.spawn_prob)
+        self.step_count = 0
+        self.total_coverage = 0.0
+        self.visited_cells.clear()
+        self.event_history.clear()
     
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
         """Randomly initialize unique agent positions on free cells within bounds.

@@ -15,7 +15,7 @@ def main():
     """Run the main application loop: init, step algorithm, and render frames."""
 
     # Parameters
-    SPEED = 10  # Steps per second
+    SIMULATION_SPEED = 10  # Steps per second
 
     # Initialize Visualization
     DISPLAYSURF = pygame.display.set_mode((0, 0), pygame.RESIZABLE)
@@ -24,26 +24,22 @@ def main():
     # Initialize Algorithm
     num_agents = 4
     # algorithm = AntColony(MAP, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
-    algorithm = Heuristic(DUST2, num_agents)
+    algorithm = Heuristic(DUST2, num_agents, simulation_speed=SIMULATION_SPEED, event_spawn_prob=0.1)
 
     # Main loop
     running = True
     while running:
-        algorithm.run_step()
-        viz.update_visuals(algorithm)
-        
-        # Display timer
-        elapsed_time = time.time() - viz.start_time
-        viz.display_timer(elapsed_time)
-
-        pygame.display.flip() # Update the full display
-        viz.clock.tick(SPEED) # Control the frame rate
-
         for event in pygame.event.get():
-            viz.buttons_event(event)
             if event.type == pygame.QUIT:
                 running = False
-    
+            else:
+                viz.buttons_event(event, algorithm)
+
+        algorithm.run_step()
+        viz.update_visuals(algorithm)
+
+        viz.clock.tick(SIMULATION_SPEED) # Control the frame rate
+
     viz.terminate()
 
 if __name__ == "__main__":
