@@ -38,12 +38,17 @@ class Visualization:
 
         for x in range(self.map.shape[0]):
             for y in range(self.map.shape[1]):
-                cell_idle: float = float(idleness[x, y])
-                ratio = min(1.0, cell_idle / 10.0)
+                
 
-                red = 255
-                green_blue = int(255 * (1 - ratio))
-                idleness_color = (red, green_blue, green_blue)
+                if self.map[x, y] == 1:  # Obstacle
+                    idleness_color = self.utils.BLACK
+                else: # Free cell
+                    cell_idle: float = float(idleness[x, y])
+                    ratio = min(1.0, cell_idle / 10.0)
+
+                    red = 255
+                    green_blue = int(255 * (1 - ratio))
+                    idleness_color = (red, green_blue, green_blue)
 
                 pygame.draw.rect(
                     self.screen,
@@ -56,6 +61,18 @@ class Visualization:
                     ],
                 )
 
+                # Grid lines
+                pygame.draw.rect(
+                    self.screen,
+                    (0, 0, 0),
+                    [
+                        (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
+                        (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
+                        self.CELL_SIZE,
+                        self.CELL_SIZE,
+                    ],
+                    1
+                )
                 # if use_pheromone:
                 #     cell_pher: float = float(pheromone[x, y])
                 #     pher_ratio: float = (cell_pher / max_pher) if max_pher > 0 else 0.0
@@ -76,12 +93,12 @@ class Visualization:
         for (ax, ay) in algorithm.agents:
             pygame.draw.circle(
                 self.screen,
-                self.utils.GREEN,
+                self.utils.BLUE,
                 [
                     (self.MARGIN + self.CELL_SIZE) * ay + self.MARGIN + self.CELL_SIZE // 2,
                     (self.MARGIN + self.CELL_SIZE) * ax + self.MARGIN + self.CELL_SIZE // 2,
                 ],
-                self.CELL_SIZE // 2,
+                self.CELL_SIZE // 3,
             )
 
     def display_timer(self, elapsed_time: float) -> None:

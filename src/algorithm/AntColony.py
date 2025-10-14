@@ -20,11 +20,12 @@ class AntColony(Algorithm):
 
     # Move agents based on pheromone and idleness
     def move_agents(self):
+        # Each agent moves to a neighboring cell based on pheromone and idleness
         for i, (x, y) in enumerate(self.agents):
             if random.random() < 0.05:
                 neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
                 neighbors = [(nx, ny) for nx, ny in neighbors
-                             if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1]]
+                             if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0]
                 if neighbors:
                     new_pos = random.choice(neighbors)
                     self.agents[i] = new_pos
@@ -37,7 +38,7 @@ class AntColony(Algorithm):
 
             neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
             neighbors = [(nx, ny) for nx, ny in neighbors
-                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1]
+                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0
                          and (nx, ny) not in self.tabu_lists[i]]
 
             if not neighbors:

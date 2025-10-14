@@ -37,7 +37,7 @@ class Heuristic(Algorithm):
             # Get the cluster boundaries
             neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
             neighbors = [(nx, ny) for nx, ny in neighbors
-                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1]]
+                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0]
 
             if not neighbors:
                 continue

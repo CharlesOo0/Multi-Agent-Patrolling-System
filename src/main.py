@@ -38,8 +38,8 @@ def main():
 
     # Initialize Algorithm
     num_agents = 4
-    algorithm = AntColony(MAP, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
-    # algorithm = Heuristic(MAP, num_agents)
+    # algorithm = AntColony(MAP, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
+    algorithm = Heuristic(MAP, num_agents)
 
     # Main loop
     running = True

@@ -57,11 +57,11 @@ class Algorithm(ABC):
         positions = []
 
         for _ in range(self.num_agents):
-            # Make sure agents dont start on the same cell
+            # Make sure agents dont start on the same cell or on an obstacle
             while True:
                 x = random.randint(0, self.width - 1)
                 y = random.randint(0, self.height - 1)
-                if (x, y) not in positions:
+                if (x, y) not in positions and self.map[x, y] == 0:
                     positions.append((x, y))
                     break
 
