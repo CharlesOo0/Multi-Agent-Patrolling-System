@@ -4,3 +4,6 @@ venv/
 # Byte-compiled
 __pycache__/
 *.pyc
+
+# VsCode settings
+.vscode/
