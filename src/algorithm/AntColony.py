@@ -3,7 +3,22 @@ import random
 from .Algorithm import Algorithm
 
 class AntColony(Algorithm):
+    """Ant Colony Optimization (ACO) algorithm for multi-agent patrolling.
+
+    Agents move according to a stochastic policy biased by pheromone intensity
+    and cell idleness. Pheromones evaporate over time to avoid stagnation.
+    """
+
     def __init__(self, map: np.ndarray, num_agents: int, evaporation_rate=0.1, alpha=1, beta=2):
+        """Initialize the ACO algorithm state.
+
+        Args:
+            map: 2D numpy array where 0=free cell and 1=obstacle.
+            num_agents: Number of agents to patrol the grid.
+            evaporation_rate: Fraction of pheromone that evaporates each step (0-1).
+            alpha: Exponent controlling the influence of pheromone.
+            beta: Exponent controlling the influence of idleness.
+        """
         super().__init__(map, num_agents)
         self.evaporation_rate = evaporation_rate
         self.alpha = alpha
@@ -14,12 +29,32 @@ class AntColony(Algorithm):
 
     # Evaporate pheromone and add random noise
     def update_pheromone(self):
+        """Apply pheromone evaporation and inject small noise to encourage exploration.
+
+        Side effects:
+            - Increases evaporation rate slightly over time (capped at 0.5).
+            - Scales down pheromone by (1 - evaporation_rate).
+            - Adds uniform random noise in [0, 0.01] per cell to avoid stagnation.
+        """
         self.evaporation_rate = min(self.evaporation_rate + 0.0005, 0.5)
         self.pheromone *= (1 - self.evaporation_rate)
         self.pheromone += np.random.uniform(0, 0.01, self.pheromone.shape)
 
     # Move agents based on pheromone and idleness
     def move_agents(self):
+        """Move each agent to a neighboring cell using pheromone and idleness cues.
+
+        Policy:
+            - With small probability, choose a random valid neighbor (exploration).
+            - Otherwise, sample a neighbor proportionally to (pheromone^alpha) * (idleness+1)^beta,
+              excluding a short tabu list to reduce immediate backtracking.
+
+        Side effects:
+            - Updates self.agents with new positions.
+            - Resets idleness at visited cells to 0.
+            - Increases pheromone at visited cells (more if above-average idleness).
+            - Updates the per-agent tabu lists (limited length 5).
+        """
         # Each agent moves to a neighboring cell based on pheromone and idleness
         for i, (x, y) in enumerate(self.agents):
             if random.random() < 0.05:
@@ -73,6 +108,7 @@ class AntColony(Algorithm):
 
     # New method to run a single step of the ACO algorithm
     def run_step(self):
+        """Run a single ACO step: update idleness, move agents, and update pheromones."""
         super().run_step()
         self.move_agents()
         self.update_pheromone()

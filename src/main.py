@@ -5,7 +5,14 @@ from algorithm import AntColony, Heuristic
 from visualization import Visualization
 from maps.maps import DUST2
 
+"""Entry point for running the multi-agent patrolling visualization demo.
+
+This module initializes a map, an algorithm (Heuristic or ACO), and a Pygame
+window to render agent movement and idleness heatmap in real time.
+"""
+
 def main():
+    """Run the main application loop: init, step algorithm, and render frames."""
 
     # Parameters
     SPEED = 10  # Steps per second

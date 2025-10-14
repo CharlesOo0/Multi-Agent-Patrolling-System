@@ -1,4 +1,12 @@
 import numpy as np
+
+"""Predefined grid maps for multi-agent patrolling demos.
+
+Each map is a 2D numpy array with values:
+- 0: free cell
+- 1: obstacle
+"""
+
 DEFAULT_MAP: np.ndarray = np.array([
     [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0],
     [0,1,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,1,0],

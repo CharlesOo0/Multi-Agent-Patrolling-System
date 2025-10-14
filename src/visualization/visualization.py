@@ -9,25 +9,62 @@ import numpy as np
 
 class Visualization:
     def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray) -> None:
-        """Initialise la fenêtre de visualisation."""
+        """Initialize the visualization window and layout for the grid.
+
+        Args:
+            WINDOW_SIZE: Desired window size (width, height) in pixels.
+            map: 2D numpy array where 0=free cell and 1=obstacle.
+        """
         pygame.init()
-        self.screen: pygame.Surface = pygame.display.set_mode(WINDOW_SIZE)
+
+        # Map and grid parameters
+        self.CELL_SIZE: int = 20
+        self.MARGIN: int = 2
+        self.map: np.ndarray = map
+
+        # Colors and utils
+        self.utils: viz_utils = viz_utils()
+
+        # Layout parameters
+        self.PADDING: int = 10        
+        self.BOTTOM_BAR_H: int = 60      
+
+        rows, cols = self.map.shape
+        # Dimensions of the grid in pixels
+        self.grid_width: int = cols * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
+        self.grid_height: int = rows * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
+
+        # Minimum window size to contain grid + bottom bar
+        min_w = self.grid_width + self.PADDING * 2
+        min_h = self.grid_height + self.BOTTOM_BAR_H + self.PADDING * 3
+        win_w = max(WINDOW_SIZE[0], min_w)
+        win_h = max(WINDOW_SIZE[1], min_h)
+
+        self.screen: pygame.Surface = pygame.display.set_mode((win_w, win_h))
         pygame.display.set_caption("Multi-Agent Patrolling with algorithm (2D Grid)")
         self.font: pygame.font.Font = pygame.font.SysFont(None, 36)
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.start_time: float = time.time()
-        # Colors / utils
-        self.utils: viz_utils = viz_utils()
-        button = Button(300, 250, 200, 50, "Quitter", self.utils.GRAY, self.utils.LIGHT_GRAY)
-        button.draw(self.screen)
-        pygame.display.flip()
-        # Constants
-        self.CELL_SIZE: int = 20
-        self.MARGIN: int = 2
-        self.map: np.ndarray = map
+
+        # Origin of the grid (top-left corner)
+        self.grid_origin: tuple[int, int] = (self.PADDING, self.PADDING)
+
+        # Rect of the bottom bar (below the grid)
+        self.bottom_bar_rect: pygame.Rect = pygame.Rect(
+            self.PADDING,
+            self.grid_origin[1] + self.grid_height + self.PADDING,
+            self.grid_width,
+            self.BOTTOM_BAR_H,
+        )
+
         self.quit_button: Button | None = None
 
     def draw_grid(self, algorithm: Algorithm) -> None:
+        """Draw the map cells colored by idleness and overlay agent positions.
+
+        Args:
+            algorithm: The running algorithm instance providing idleness and agents.
+        """
         idleness: np.ndarray = algorithm.idleness
         max_idle: float = float(idleness.max()) if idleness.size > 0 else 0.0
 
@@ -102,10 +139,19 @@ class Visualization:
             )
 
     def display_timer(self, elapsed_time: float) -> None:
+        """Render and display the elapsed time in the bottom bar.
+
+        Args:
+            elapsed_time: Time in seconds since visualization start.
+        """
         timer_text = self.font.render(f"Time: {elapsed_time:.1f}s", True, self.utils.BLACK)
-        self.screen.blit(timer_text, (10, 450))
+        # Positionné dans la barre inférieure (aligné à gauche, centré verticalement)
+        x = self.bottom_bar_rect.left + 10
+        y = self.bottom_bar_rect.centery - timer_text.get_height() // 2
+        self.screen.blit(timer_text, (x, y))
 
     def update_visuals(self, algorithm: Algorithm) -> None:
+        """Redraw the entire screen: grid, timer, and interactive button, then flip."""
         self.screen.fill((255, 255, 255))
         self.draw_grid(algorithm)
         self.display_timer(time.time() - self.start_time)
@@ -113,15 +159,22 @@ class Visualization:
         pygame.display.flip()
 
     def terminate(self) -> None:
+        """Terminate pygame and exit the process cleanly."""
         pygame.quit()
         sys.exit()
 
     def display_button(self) -> None:
+        """Create and draw the bottom-bar Quit button."""
         BUTTON_HEIGHT: int = 40
         BUTTON_WIDTH: int = 150
+
+        # Bouton aligné à droite dans la barre inférieure
+        x = self.bottom_bar_rect.right - BUTTON_WIDTH - 10
+        y = self.bottom_bar_rect.centery - BUTTON_HEIGHT // 2
+
         self.quit_button = Button(
-            self.map.shape[0] * self.CELL_SIZE + 40 - BUTTON_WIDTH,
-            self.map.shape[1] * self.CELL_SIZE + BUTTON_HEIGHT + 10,
+            x,
+            y,
             BUTTON_WIDTH,
             BUTTON_HEIGHT,
             "Quitter",
@@ -131,5 +184,6 @@ class Visualization:
         self.quit_button.draw(self.screen)
 
     def buttons_event(self, event: pygame.event.Event) -> None:
+        """Dispatch pygame events to on-screen buttons (e.g., Quit)."""
         if self.quit_button:
             self.quit_button.quit_button_event(event)

@@ -4,19 +4,20 @@ import random
 from typing import List, Tuple
 
 class Algorithm(ABC):
-    """
-    Abstract base class for multi-agent patrolling algorithms.
-    Defines the common interface and shared functionality for all patrolling algorithms.
+    """Abstract base class for multi-agent patrolling algorithms.
+
+    Provides shared state such as the map, agent positions, and idleness grid,
+    along with a template method 'run_step' that increments idleness each step.
+    Subclasses must implement their movement/update logic in 'run_step'.
     """
 
     def __init__(self, map: np.ndarray, num_agents: int, **kwargs):
-        """
-        Initialize the algorithm with basic parameters.
-        
+        """Initialize the base algorithm with common state.
+
         Args:
-            map: 2D numpy array representing the patrol area
-            num_agents: Number of agents in the system
-            **kwargs: Additional algorithm-specific parameters
+            map: 2D numpy array representing the patrol area (0=free, 1=obstacle).
+            num_agents: Number of agents in the system.
+            **kwargs: Additional algorithm-specific parameters (ignored by base).
         """
         self.map = map
         self.num_agents = num_agents
@@ -33,20 +34,20 @@ class Algorithm(ABC):
     
     @abstractmethod
     def run_step(self) -> None:
-        """
-        Execute one step of the algorithm.
-        This method must be implemented by each specific algorithm.
+        """Execute one step, increasing idleness and step count.
+
+        Subclasses should call 'super().run_step()' first, then apply their
+        movement/coordination logic and any additional state updates.
         """
         # Update idleness for all cells
         self.idleness += 0.1
         self.step_count += 1
     
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
-        """
-        Randomly initialize agent positions within the map boundaries.
-        
+        """Randomly initialize unique agent positions on free cells within bounds.
+
         Returns:
-            List of tuples representing initial positions of agents.
+            List of (x, y) tuples representing initial positions of agents.
         """
         # Check if there are enough cells for all agents
         if self.num_agents > self.width * self.height:
