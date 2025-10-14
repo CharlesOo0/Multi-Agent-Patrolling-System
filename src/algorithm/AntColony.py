@@ -3,32 +3,64 @@ import random
 from .Algorithm import Algorithm
 
 class AntColony(Algorithm):
-    def __init__(self, map_size, num_agents, evaporation_rate=0.1, alpha=1, beta=2):
-        super().__init__(map_size, num_agents)
+    """Ant Colony Optimization (ACO) algorithm for multi-agent patrolling.
+
+    Agents move according to a stochastic policy biased by pheromone intensity
+    and cell idleness. Pheromones evaporate over time to avoid stagnation.
+    """
+
+    def __init__(self, map: np.ndarray, num_agents: int, evaporation_rate=0.1, alpha=1, beta=2, **kwargs):
+        """Initialize the ACO algorithm state.
+
+        Args:
+            map: 2D numpy array where 0=free cell and 1=obstacle.
+            num_agents: Number of agents to patrol the grid.
+            evaporation_rate: Fraction of pheromone that evaporates each step (0-1).
+            alpha: Exponent controlling the influence of pheromone.
+            beta: Exponent controlling the influence of idleness.
+        """
+        super().__init__(map, num_agents, **kwargs)
         self.evaporation_rate = evaporation_rate
         self.alpha = alpha
         self.beta = beta
-        self.pheromone = np.ones(map_size)
+        self.pheromone = np.ones(map.shape)
         
         self.tabu_lists = [[] for _ in range(num_agents)]
 
-    # Update idleness for all cells
-    def update_idleness(self):
-        self.idleness += 0.1
-
     # Evaporate pheromone and add random noise
     def update_pheromone(self):
+        """Apply pheromone evaporation and inject small noise to encourage exploration.
+
+        Side effects:
+            - Increases evaporation rate slightly over time (capped at 0.5).
+            - Scales down pheromone by (1 - evaporation_rate).
+            - Adds uniform random noise in [0, 0.01] per cell to avoid stagnation.
+        """
         self.evaporation_rate = min(self.evaporation_rate + 0.0005, 0.5)
         self.pheromone *= (1 - self.evaporation_rate)
         self.pheromone += np.random.uniform(0, 0.01, self.pheromone.shape)
 
     # Move agents based on pheromone and idleness
     def move_agents(self):
+        """Move each agent to a neighboring cell using pheromone and idleness cues.
+
+        Policy:
+            - With small probability, choose a random valid neighbor (exploration).
+            - Otherwise, sample a neighbor proportionally to (pheromone^alpha) * (idleness+1)^beta,
+              excluding a short tabu list to reduce immediate backtracking.
+
+        Side effects:
+            - Updates self.agents with new positions.
+            - Resets idleness at visited cells to 0.
+            - Increases pheromone at visited cells (more if above-average idleness).
+            - Updates the per-agent tabu lists (limited length 5).
+        """
+        # Each agent moves to a neighboring cell based on pheromone and idleness
         for i, (x, y) in enumerate(self.agents):
             if random.random() < 0.05:
                 neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
                 neighbors = [(nx, ny) for nx, ny in neighbors
-                             if 0 <= nx < self.map_size[0] and 0 <= ny < self.map_size[1]]
+                             if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0]
                 if neighbors:
                     new_pos = random.choice(neighbors)
                     self.agents[i] = new_pos
@@ -41,7 +73,7 @@ class AntColony(Algorithm):
 
             neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
             neighbors = [(nx, ny) for nx, ny in neighbors
-                         if 0 <= nx < self.map_size[0] and 0 <= ny < self.map_size[1]
+                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0
                          and (nx, ny) not in self.tabu_lists[i]]
 
             if not neighbors:
@@ -76,6 +108,7 @@ class AntColony(Algorithm):
 
     # New method to run a single step of the ACO algorithm
     def run_step(self):
+        """Run a single ACO step: update idleness, move agents, and update pheromones."""
         super().run_step()
         self.move_agents()
         self.update_pheromone()

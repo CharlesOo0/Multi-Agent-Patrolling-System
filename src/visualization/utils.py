@@ -1,4 +1,6 @@
 class viz_utils:
+    """Simple container for commonly used RGB color tuples."""
+
     def __init__(self):
         self.WHITE = (255, 255, 255)
         self.BLACK = (0, 0, 0)
