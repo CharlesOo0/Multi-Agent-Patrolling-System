@@ -6,12 +6,12 @@ from typing import Optional, Callable
 
 import numpy as np
 
-from .components.utils import viz_utils
-from visualization import Visualization
+from ui.components.utils import viz_utils
+from ui.routes.Simulation.visualization import Visualization
 from maps.MapLoader import MapLoader
 from algorithm import Heuristic # default; user can extend later
 
-from .base import Page
+from ui.routes.base import Page
 
 
 class SimPage(Page):
@@ -37,10 +37,10 @@ class SimPage(Page):
         self.viz = Visualization(screen.get_size(), MAP)
         # Algorithm default
         num_agents = 4
-        self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=1)
+        self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=0.05)
 
         # Back button in bottom bar area (left corner)
-        from .components.button import Button
+        from ui.components.button import Button
         self._back_btn = Button(20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self._sim_accum = 0.0
 

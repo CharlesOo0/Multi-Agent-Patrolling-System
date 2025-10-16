@@ -91,7 +91,6 @@ class EventManager:
         print(f"random={r} spawn_prob={self.spawn_prob}")
         if  r > self.spawn_prob:
             return None
-        print("spawning event")
 
         pos = self._random_free_cell(map_arr)
         if pos is None:

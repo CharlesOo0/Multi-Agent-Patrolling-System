@@ -49,7 +49,6 @@ class Algorithm(ABC):
 
     def _run_event_step(self) -> None:
         """Handle event spawning and apply their effects on idleness."""
-        print(f"event step {self.step_count}")
         spawned = self.events.maybe_spawn_event(self.map)
         if spawned is not None:
             # Log event with metadata

@@ -1,7 +1,7 @@
 import pygame
 import time
 
-from ui.base import Router
+from ui.routes.base import Router
 from ui import HomePage, SimPage, SettingsPage
 
 

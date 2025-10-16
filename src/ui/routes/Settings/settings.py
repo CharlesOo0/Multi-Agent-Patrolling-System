@@ -3,9 +3,9 @@ from __future__ import annotations
 import pygame
 from typing import Optional, Callable
 
-from .components.button import Button
-from .components.utils import viz_utils
-from .base import Page
+from ui.components.button import Button
+from ui.components.utils import viz_utils
+from ui.routes.base import Page
 
 
 class SettingsPage(Page):
