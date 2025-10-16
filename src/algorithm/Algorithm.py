@@ -19,8 +19,7 @@ class Algorithm(ABC):
             map: 2D numpy array representing the patrol area (0=free, 1=obstacle).
             num_agents: Number of agents in the system.
             **kwargs: Additional algorithm-specific parameters (ignored by base).
-                - event_spawn_prob: Probability of spawning an event each step (default 0.05).
-                - sim_speed_tps: Speed multiplier for event effects (default 1.0).
+                - event_spawn_prob: Probability of spawning an event each step (default 0.10).
 
         """
         self.map = map
@@ -32,13 +31,12 @@ class Algorithm(ABC):
         self.agents = self._initialize_agent_positions()
         
         # Simulation speed and events configuration
-        self.sim_speed_tps: float = float(kwargs.get("sim_speed_tps", 1.0))
-        self.base_event_spawn_prob: float = float(kwargs.get("event_spawn_prob", 0.05))
+        self.base_event_spawn_prob: float = float(kwargs.get("event_spawn_prob", 1))
 
         # Events manager (CS:GO-like) to influence idleness each step
         # Scale spawn probability inverse to simulation speed so real-time rate stays stable
         self.events = EventManager(
-            spawn_prob=self.base_event_spawn_prob / max(self.sim_speed_tps, 0.1)
+            spawn_prob=self.base_event_spawn_prob
         )
         
         # Tracking variables
@@ -85,23 +83,13 @@ class Algorithm(ABC):
         self.agents = self._initialize_agent_positions()
         # Recreate EventManager with spawn prob matching current simulation speed
         self.events = EventManager(
-            spawn_prob=self.base_event_spawn_prob / max(self.sim_speed_tps, 0.1)
+            spawn_prob=self.base_event_spawn_prob
         )
         self.step_count = 0
         self.total_coverage = 0.0
         self.visited_cells.clear()
         self.event_history.clear()
     
-    def set_simulation_speed(self, speed: float) -> None:
-        """Update simulation speed and adjust event spawn rate accordingly.
-
-        Args:
-            speed: Desired ticks per second (>0). Values are clamped to [0.1, +inf).
-        """
-        self.sim_speed_tps = max(0.1, float(speed))
-        # Keep roughly constant events per real second by inversely scaling per-tick prob
-        self.events.spawn_prob = self.base_event_spawn_prob / self.sim_speed_tps
-
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
         """Randomly initialize unique agent positions on free cells within bounds.
 

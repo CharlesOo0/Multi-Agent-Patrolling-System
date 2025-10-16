@@ -2,8 +2,8 @@ import pygame
 import sys
 import time
 from typing import Tuple, List, Dict, Any
-from .button import Button
-from .utils import viz_utils
+from ui.components.button import Button
+from ui.components.utils import viz_utils
 from algorithm import Algorithm
 import numpy as np
 
@@ -202,7 +202,12 @@ class Visualization:
         With increment 1/base_speed, the simulated seconds per real second
         become sim_speed_tps/base_speed when running one tick per frame.
         """
-        self.sim_time += 1.0 / max(self.base_speed, 0.1)
+        """Avancer le temps simulé d'une seconde par 'tick' logique.
+
+        Dans notre schéma actuel, un 'tick' correspond à 1 seconde simulée,
+        déclenchée lorsque l'accumulateur atteint 1.0 dans SimPage.update().
+        """
+        self.sim_time += 1.0
 
     def terminate(self) -> None:
         """Terminate pygame and exit the process cleanly."""
@@ -350,4 +355,3 @@ class Visualization:
         new_speed = round(new_speed * 2) / 2.0
         self.speed_multiplier = new_speed
         
-        algorithm.set_simulation_speed(self.sim_speed_tps * self.speed_multiplier)

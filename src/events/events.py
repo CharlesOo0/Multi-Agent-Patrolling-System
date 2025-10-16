@@ -62,9 +62,9 @@ class EventManager:
                  bomb_cfg: Optional[Dict] = None,
                  ally_cfg: Optional[Dict] = None,
                  enemy_cfg: Optional[Dict] = None) -> None:
+        print(f"spawn_prob={spawn_prob}")
         self.spawn_prob = spawn_prob
         self.active: List[Event] = []
-
         # Default configurations per event type
         self.bomb_cfg = bomb_cfg or {"radius": 4, "magnitude": 5.0, "ttl": 10}
         self.ally_cfg = ally_cfg or {"radius": 3, "magnitude": 3.0, "ttl": 6}
@@ -87,8 +87,11 @@ class EventManager:
         Returns:
             The created Event or None if no event spawned.
         """
-        if random.random() > self.spawn_prob:
+        r = random.random()
+        print(f"random={r} spawn_prob={self.spawn_prob}")
+        if  r > self.spawn_prob:
             return None
+        print("spawning event")
 
         pos = self._random_free_cell(map_arr)
         if pos is None:

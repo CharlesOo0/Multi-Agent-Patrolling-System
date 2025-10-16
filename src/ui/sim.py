@@ -1,0 +1,90 @@
+from __future__ import annotations
+
+import pygame
+import time
+from typing import Optional, Callable
+
+import numpy as np
+
+from .components.utils import viz_utils
+from visualization import Visualization
+from maps.MapLoader import MapLoader
+from algorithm import Heuristic # default; user can extend later
+
+from .base import Page
+
+
+class SimPage(Page):
+    """Simulation page embedding the existing Visualization UI."""
+
+    def __init__(self, go_home: Callable[[], None]):
+        self.utils = viz_utils()
+        self.go_home = go_home
+        self.viz: Visualization | None = None
+        self.algorithm = None
+        self._back_btn = None
+        # Accumulateur de temps simulé pour déclencher les steps à 1 Hz simulé
+        self._sim_accum: float = 0.0
+
+    def on_enter(self, prev: Optional[str] = None) -> None:
+        # Initialize viz and algorithm based on current screen size and default map
+        screen = pygame.display.get_surface()
+        if screen is None:
+            screen = pygame.display.set_mode((1280, 800), pygame.RESIZABLE)
+        # Load default map
+        loader = MapLoader()
+        MAP = loader.load("DUST2")
+        self.viz = Visualization(screen.get_size(), MAP)
+        # Algorithm default
+        num_agents = 4
+        self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=1)
+
+        # Back button in bottom bar area (left corner)
+        from .components.button import Button
+        self._back_btn = Button(20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._sim_accum = 0.0
+
+    def on_exit(self, next: Optional[str] = None) -> None:
+        # Let Visualization clean up Pygame subsystems only when quitting whole app
+        # Here we just drop references; router controls the main window.
+        self.viz = None
+        self.algorithm = None
+        self._back_btn = None
+
+    def handle_event(self, event: pygame.event.Event) -> None:
+        if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
+            self.go_home()
+            return
+        if self._back_btn:
+            self._back_btn.hover_property(event)
+            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
+                pos = pygame.mouse.get_pos()
+                if self._back_btn.is_clicked(pos, event):
+                    self.go_home()
+                    return
+        if self.viz and self.algorithm:
+            # forward UI events to existing Visualization for speed/reset/quit etc.
+            self.viz.buttons_event(event, self.algorithm)
+
+    def update(self, dt: float) -> None:
+        if not (self.viz and self.algorithm):
+            return
+        # Appliquer seulement le multiplicateur UI sur le temps réel
+        # x1.0 => secondes simulées ~= secondes réelles
+        sim_dt = dt * float(self.viz.speed_multiplier)
+        self._sim_accum += sim_dt
+        # Exécuter un step par seconde simulée écoulée
+        while self._sim_accum >= 1.0:
+            self.algorithm.run_step()
+            self.viz.advance_sim_time_per_tick()
+            self._sim_accum -= 1.0
+
+    def render(self, screen: pygame.Surface) -> None:
+        if not (self.viz and self.algorithm):
+            return
+        # Visualization renders onto its own screen surface; ensure same reference
+        self.viz.screen = screen
+        self.viz.update_visuals(self.algorithm)
+        # Draw a small back button overlay (top-left)
+        if self._back_btn:
+            self._back_btn.draw(screen)
