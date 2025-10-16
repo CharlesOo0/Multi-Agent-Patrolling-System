@@ -9,7 +9,8 @@ import numpy as np
 from ui.components.utils import viz_utils
 from ui.routes.Simulation.visualization import Visualization
 from maps.MapLoader import MapLoader
-from algorithm import Heuristic # default; user can extend later
+from algorithm import Heuristic, AntColony # default; user can extend later
+from ui.config import sim_config
 
 from ui.routes.base import Page
 
@@ -33,11 +34,24 @@ class SimPage(Page):
             screen = pygame.display.set_mode((1280, 800), pygame.RESIZABLE)
         # Load default map
         loader = MapLoader()
-        MAP = loader.load("DUST2")
+        MAP = loader.load(sim_config.map_name)
         self.viz = Visualization(screen.get_size(), MAP)
-        # Algorithm default
-        num_agents = 4
-        self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=0.05)
+        # Algorithm from settings
+        algo_name = sim_config.algorithm
+        num_agents = int(sim_config.num_agents)
+        spawn_prob = float(sim_config.spawn_prob)
+        if algo_name == "AntColony":
+            p = sim_config.algo_params.get("AntColony", {})
+            self.algorithm = AntColony(
+                MAP,
+                num_agents,
+                evaporation_rate=float(p.get("evaporation_rate", 0.1)),
+                alpha=float(p.get("alpha", 1.0)),
+                beta=float(p.get("beta", 2.0)),
+                event_spawn_prob=spawn_prob,
+            )
+        else:
+            self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=spawn_prob)
 
         # Back button in bottom bar area (left corner)
         from ui.components.button import Button
