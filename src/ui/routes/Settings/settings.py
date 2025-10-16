@@ -24,6 +24,7 @@ class SettingsPage(Page):
         self._map_selector: CycleSelector | None = None
         self._agents_stepper: Stepper | None = None
         self._spawn_stepper: Stepper | None = None
+        self._iddleness_stepper: Stepper | None = None
         # Algo-specific controls
         self._aco_evap: Stepper | None = None
         self._aco_alpha: Stepper | None = None
@@ -87,6 +88,13 @@ class SettingsPage(Page):
             on_change=self._set_spawn_prob,
         )
 
+        # Iddleness growth rate
+        self._iddleness_stepper = Stepper(
+            x0 + 220, y0 + 4 * row_h, ctrl_w, ctrl_h,
+            value=float(sim_config.iddleness_growth), step=0.001, min_value=0.0, max_value=1.0, fmt="{:.3f}",
+            on_change=self._set_iddleness_growth,
+        )
+
         # ACO specific controls
         aco = sim_config.algo_params.get("AntColony", {})
         self._aco_evap = Stepper(
@@ -122,6 +130,8 @@ class SettingsPage(Page):
             self._agents_stepper.handle_event(event)
         if self._spawn_stepper:
             self._spawn_stepper.handle_event(event)
+        if self._iddleness_stepper:
+            self._iddleness_stepper.handle_event(event)
         if self._is_aco():
             self._aco_evap and self._aco_evap.handle_event(event)
             self._aco_alpha and self._aco_alpha.handle_event(event)
@@ -144,6 +154,7 @@ class SettingsPage(Page):
             ("Carte", y0 + row_h),
             ("Nombre d'agents", y0 + 2 * row_h),
             ("Taux de spawn event (0-1)", y0 + 3 * row_h),
+            ("Croissance idleness (0-1)", y0 + 4 * row_h),
         ]
         for text, y in labels:
             surf = self.small.render(text, True, self.utils.BLACK)
@@ -157,6 +168,8 @@ class SettingsPage(Page):
             self._agents_stepper.draw(screen)
         if self._spawn_stepper:
             self._spawn_stepper.draw(screen)
+        if self._iddleness_stepper:
+            self._iddleness_stepper.draw(screen)
 
         # Section spécifique ACO
         if self._is_aco():
@@ -196,3 +209,6 @@ class SettingsPage(Page):
     def _set_aco_param(self, key: str, v: float) -> None:
         p = sim_config.algo_params.setdefault("AntColony", {})
         p[key] = v
+
+    def _set_iddleness_growth(self, v: float) -> None:
+        sim_config.iddleness_growth = max(0.0, min(1.0, float(v)))

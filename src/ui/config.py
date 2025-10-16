@@ -6,16 +6,17 @@ from typing import Dict, Any
 
 @dataclass
 class SimConfig:
-    """Configuration partagée pour la simulation.
+    """Global simulation configuration accessible par les pages.
 
-    Note: Cette config est lue par `SimPage.on_enter` au lancement de la simulation.
-    Modifiez-la depuis la page Settings.
+    Note: This config is read by `SimPage.on_enter` when starting the simulation.
+    Modify it from the Settings page.
     """
 
     map_name: str = "DUST2"
     algorithm: str = "Heuristic"  # "Heuristic" | "AntColony"
     num_agents: int = 4
     spawn_prob: float = 0.05
+    iddleness_growth: float = 0.05
 
     # Paramètres spécifiques aux algorithmes
     algo_params: Dict[str, Any] = field(

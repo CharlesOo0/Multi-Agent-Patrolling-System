@@ -49,6 +49,7 @@ class SimPage(Page):
                 alpha=float(p.get("alpha", 1.0)),
                 beta=float(p.get("beta", 2.0)),
                 event_spawn_prob=spawn_prob,
+                iddleness_growth=float(sim_config.iddleness_growth),
             )
         else:
             self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=spawn_prob)
