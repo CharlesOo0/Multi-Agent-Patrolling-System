@@ -47,10 +47,11 @@ class Visualization:
         self.clock: pygame.time.Clock = pygame.time.Clock()
         self.start_time: float = time.time()
         # Simulation timing: speed (ticks/sec) and simulated time accumulator
-        self.sim_speed: float = 10.0
-        self.base_speed: float = self.sim_speed  # reference to scale simulated time
-        self.min_speed: float = 10.0
-        self.max_speed: float = 240.0
+        self.sim_speed_tps: float = 10.0
+        self.speed_multiplier: float = 1.0
+        self.base_speed: float = self.sim_speed_tps * self.speed_multiplier  # reference to scale simulated time
+        self.min_speed: float = 1.0
+        self.max_speed: float = 15.0
         self.sim_time: float = 0.0
 
         # Compute layout rects (grid centered in left content area)
@@ -176,11 +177,11 @@ class Visualization:
         Args:
             elapsed_time: Wall-clock seconds since visualization start.
         """
-        # Show simulated time (scaled by sim_speed) in mm:ss
+        # Show simulated time (scaled by sim_speed_tps) in mm:ss
         sim_secs = int(self.sim_time)
         mm = sim_secs // 60
         ss = sim_secs % 60
-        timer_text = self.font.render(f"Temps (x{self.sim_speed:.1f}): {mm:02d}:{ss:02d}", True, self.utils.BLACK)
+        timer_text = self.font.render(f"Temps (x{self.speed_multiplier:.1f}): {mm:02d}:{ss:02d}", True, self.utils.BLACK)
         # Positionné dans la barre inférieure (aligné à gauche, centré verticalement)
         x = self.bottom_bar_rect.left + 10
         y = self.bottom_bar_rect.centery - timer_text.get_height() // 2
@@ -199,7 +200,7 @@ class Visualization:
         """Advance simulated time by a fixed amount per tick based on base speed.
 
         With increment 1/base_speed, the simulated seconds per real second
-        become sim_speed/base_speed when running one tick per frame.
+        become sim_speed_tps/base_speed when running one tick per frame.
         """
         self.sim_time += 1.0 / max(self.base_speed, 0.1)
 
@@ -244,7 +245,7 @@ class Visualization:
 
         # Speed controls group placed to the left of Reset button
         label_font = pygame.font.SysFont(None, 28)
-        label = label_font.render(f"Vitesse: {self.sim_speed:.1f} tps", True, self.utils.BLACK)
+        label = label_font.render(f"Vitesse: {self.speed_multiplier:.1f}", True, self.utils.BLACK)
         group_width = SMALL_W + 8 + SMALL_W + 16 + label.get_width()
         sx = rx - GAP - group_width
 
@@ -344,9 +345,9 @@ class Visualization:
             delta: Signed increment in ticks per second (e.g., -1 or +1).
             algorithm: Algorithm instance to synchronize speed-dependent params.
         """
-        new_speed = max(self.min_speed, min(self.max_speed, self.sim_speed + delta))
+        new_speed = max(self.min_speed, min(self.max_speed, self.speed_multiplier + delta))
         # Snap to 0.5 steps for finer control
         new_speed = round(new_speed * 2) / 2.0
-        self.sim_speed = new_speed
+        self.speed_multiplier = new_speed
         
-        algorithm.set_simulation_speed(self.sim_speed)
+        algorithm.set_simulation_speed(self.sim_speed_tps * self.speed_multiplier)

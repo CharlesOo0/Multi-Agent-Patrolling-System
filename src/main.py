@@ -25,10 +25,10 @@ def main():
     # Initialize Algorithm
     num_agents = 4
     # algorithm = AntColony(MAP, num_agents, evaporation_rate=0.1, alpha=1, beta=2)
-    algorithm = Heuristic(MAP, num_agents, simulation_speed=viz.sim_speed, event_spawn_prob=0.1)
+    algorithm = Heuristic(MAP, num_agents, sim_speed_tps=viz.sim_speed_tps, event_spawn_prob=0.1)
 
     # Ensure algorithm stays in sync if UI changed speed before first frame
-    algorithm.set_simulation_speed(viz.sim_speed)
+    algorithm.set_simulation_speed(viz.sim_speed_tps)
 
     # Main loop
     running = True
@@ -44,7 +44,7 @@ def main():
         viz.advance_sim_time_per_tick()
         viz.update_visuals(algorithm)
 
-        viz.clock.tick(int(viz.sim_speed)) # Control the frame rate using current speed
+        viz.clock.tick(int(viz.sim_speed_tps * viz.speed_multiplier)) # Control the frame rate using current speed
 
     viz.terminate()
 
