@@ -2,7 +2,7 @@ import pygame
 import time
 
 from ui.routes.base import Router
-from ui import HomePage, SimPage, SettingsPage
+from ui import HomePage, SimPage, SettingsPage, StatsPage
 
 
 def run_with_router():
@@ -16,15 +16,23 @@ def run_with_router():
     def go_home():
         router.navigate("home")
 
+    # Stats page instance is created first to be able to inject results later
+    stats_page = StatsPage(go_home=go_home, go_sim=lambda: router.navigate("sim"))
+
     def go_sim():
         router.navigate("sim")
 
     def go_settings():
         router.navigate("settings")
 
+    def go_stats(results: dict) -> None:
+        stats_page.set_results(results)
+        router.navigate("stats")
+
     router.register("home", HomePage(go_to_sim=go_sim, go_to_settings=go_settings))
-    router.register("sim", SimPage(go_home=go_home))
+    router.register("sim", SimPage(go_home=go_home, go_stats=go_stats))
     router.register("settings", SettingsPage(go_back=go_home))
+    router.register("stats", stats_page)
 
     router.start()
 

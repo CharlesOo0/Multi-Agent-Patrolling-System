@@ -1,7 +1,7 @@
 import pygame
 import sys
 import time
-from typing import Tuple, List, Dict, Any
+from typing import Tuple, List, Dict, Any, Optional, Callable
 from ui.components.button import Button
 from ui.components.utils import viz_utils
 from algorithm import Algorithm
@@ -62,6 +62,8 @@ class Visualization:
         self.reset_button: Button | None = None
         self.speed_dec_button: Button | None = None
         self.speed_inc_button: Button | None = None
+        # Callback appelé quand l'utilisateur termine la simulation via le bouton
+        self.on_finish = None
 
     def _recompute_layout(self, win_w: int, win_h: int) -> None:
         """Recompute layout rectangles and grid origin based on window size."""
@@ -215,13 +217,13 @@ class Visualization:
         sys.exit()
 
     def display_buttons(self) -> None:
-        """Create and draw speed controls, Reset and Quit buttons in the bottom bar."""
+        """Create and draw speed controls, Reset and Finish buttons in the bottom bar."""
         BUTTON_HEIGHT: int = 40
         BUTTON_WIDTH: int = 150
         GAP: int = 10
         SMALL_W: int = 48
 
-        # Quit button (right)
+        # Finish button (right)
         qx = self.bottom_bar_rect.right - BUTTON_WIDTH - GAP
         by = self.bottom_bar_rect.centery - BUTTON_HEIGHT // 2
         self.quit_button = Button(
@@ -229,7 +231,7 @@ class Visualization:
             by,
             BUTTON_WIDTH,
             BUTTON_HEIGHT,
-            "Quitter",
+            "Terminer",
             self.utils.GRAY,
             self.utils.LIGHT_GRAY,
         )
@@ -311,7 +313,7 @@ class Visualization:
                 break
 
     def buttons_event(self, event: pygame.event.Event, algorithm: Algorithm) -> None:
-        """Handle hover and clicks for Reset and Quit buttons."""
+        """Handle hover and clicks for Reset, Finish and Speed buttons."""
         # Window resize handling
         if event.type == pygame.VIDEORESIZE:
             new_size = (event.w, event.h)
@@ -330,7 +332,12 @@ class Visualization:
             if self.reset_button and self.reset_button.is_clicked(mouse_pos, event):
                 self.reset_simulation(algorithm)
             if self.quit_button and self.quit_button.is_clicked(mouse_pos, event):
-                self.terminate()
+                # Appel du callback fourni par la page de simulation
+                if callable(self.on_finish):
+                    self.on_finish()
+                else:
+                    # Par sécurité, on termine l'application si aucun callback n'est défini
+                    self.terminate()
             if self.speed_dec_button and self.speed_dec_button.is_clicked(mouse_pos, event):
                 self._adjust_speed(-1.0, algorithm)
             if self.speed_inc_button and self.speed_inc_button.is_clicked(mouse_pos, event):

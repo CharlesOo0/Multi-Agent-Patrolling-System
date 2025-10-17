@@ -44,6 +44,7 @@ class Algorithm(ABC):
         self.step_count = 0
         self.total_coverage = 0.0
         self.visited_cells = set()
+        self.average_idleness_history: List[float] = []
 
         # History for visualization logs panel
         self.event_history: List[dict] = []
@@ -62,6 +63,21 @@ class Algorithm(ABC):
                 "ttl": int(spawned.ttl),
             })
         self.events.apply_events(self.idleness)
+
+    def _update_statistics(self) -> None:
+        """
+        Update all the statistics tracked by the algorithm.
+        This includes total coverage, average idleness, and per-agent coverage history.
+        """
+        for agent_pos in self.agents:
+            self.visited_cells.add(agent_pos)
+                
+        total_free_cells = np.sum(self.map == 0)
+        visited_cells_count = len(self.visited_cells)
+        self.total_coverage = visited_cells_count / total_free_cells if total_free_cells > 0 else 0.0
+
+        average_idleness = np.mean(self.idleness[self.map == 0])  # Only consider free cells
+        self.average_idleness_history.append(average_idleness)
     
     @abstractmethod
     def run_step(self) -> None:
@@ -76,6 +92,8 @@ class Algorithm(ABC):
         
         # Apply events effects
         self._run_event_step()
+        # Update statistics
+        self._update_statistics()
 
     def reset(self) -> None:
         """Reset algorithm internal state for a fresh run (used by UI Reset)."""

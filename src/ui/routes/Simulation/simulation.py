@@ -18,9 +18,10 @@ from ui.routes.base import Page
 class SimPage(Page):
     """Simulation page embedding the existing Visualization UI."""
 
-    def __init__(self, go_home: Callable[[], None]):
+    def __init__(self, go_home: Callable[[], None], go_stats: Callable[[dict], None] | None = None):
         self.utils = viz_utils()
         self.go_home = go_home
+        self.go_stats = go_stats
         self.viz: Visualization | None = None
         self.algorithm = None
         self._back_btn = None
@@ -36,6 +37,22 @@ class SimPage(Page):
         loader = MapLoader()
         MAP = loader.load(sim_config.map_name)
         self.viz = Visualization(screen.get_size(), MAP)
+
+        # Perform any finalization when simulation ends
+        def _finish():
+            if not (self.viz and self.algorithm):
+                return
+            results = {
+                "algorithm_name": type(self.algorithm).__name__,
+                "steps": int(getattr(self.algorithm, "step_count", 0)),
+                "average_idleness_history": list(getattr(self.algorithm, "average_idleness_history", [])),
+                "event_count": int(len(getattr(self.algorithm, "event_history", []))),
+                "map_shape": tuple(self.algorithm.map.shape) if hasattr(self.algorithm, "map") else (0, 0),
+            }
+            if callable(self.go_stats):
+                self.go_stats(results)
+
+        self.viz.on_finish = _finish
         # Algorithm from settings
         algo_name = sim_config.algorithm
         num_agents = int(sim_config.num_agents)

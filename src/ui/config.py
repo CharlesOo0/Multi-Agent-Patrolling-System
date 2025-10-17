@@ -31,5 +31,5 @@ class SimConfig:
     )
 
 
-# Singleton simple utilisé par les pages
+# Global config instance
 sim_config = SimConfig()
