@@ -9,15 +9,17 @@ from ui.routes.base import Page
 
 
 class HomePage(Page):
-    def __init__(self, go_to_sim: Callable[[], None], go_to_settings: Callable[[], None]):
+    def __init__(self, go_to_sim: Callable[[], None], go_to_settings: Callable[[], None], go_to_map_editor: Callable[[],None]):
         self.utils = viz_utils()
         self.font = pygame.font.SysFont(None, 52)
         self.small = pygame.font.SysFont(None, 28)
         self._buttons_ready = False
         self._btn_sim: Button | None = None
         self._btn_settings: Button | None = None
+        self._btn_edit_map: Button | None = None
         self.go_to_sim = go_to_sim
         self.go_to_settings = go_to_settings
+        self.go_to_map_editor = go_to_map_editor
 
     def on_enter(self, prev: Optional[str] = None) -> None:
         self._buttons_ready = False
@@ -34,6 +36,7 @@ class HomePage(Page):
         cy = h // 2
         self._btn_sim = Button(cx, cy - bh - gap, bw, bh, "Lancer simulation", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self._btn_settings = Button(cx, cy + gap, bw, bh, "Paramètres", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_edit_map = Button(cx, cy + bh + gap*3, bw, bh, "Editeur de Carte", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self._buttons_ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -43,8 +46,10 @@ class HomePage(Page):
                 self.go_to_sim()
             if self._btn_settings and self._btn_settings.is_clicked(pos, event):
                 self.go_to_settings()
+            if self._btn_edit_map and self._btn_edit_map.is_clicked(pos, event):
+                self.go_to_map_editor()
         # hover cursors
-        for b in (self._btn_sim, self._btn_settings):
+        for b in (self._btn_sim, self._btn_settings, self._btn_edit_map):
             if b:
                 b.hover_property(event)
 
@@ -64,3 +69,5 @@ class HomePage(Page):
             self._btn_sim.draw(screen)
         if self._btn_settings:
             self._btn_settings.draw(screen)
+        if self._btn_edit_map:
+            self._btn_edit_map.draw(screen)
