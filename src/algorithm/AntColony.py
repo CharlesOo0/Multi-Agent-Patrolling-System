@@ -2,6 +2,7 @@ import numpy as np
 import random
 from .Algorithm import Algorithm
 
+
 class AntColony(Algorithm):
     """Ant Colony Optimization (ACO) algorithm for multi-agent patrolling.
 
@@ -9,7 +10,15 @@ class AntColony(Algorithm):
     and cell idleness. Pheromones evaporate over time to avoid stagnation.
     """
 
-    def __init__(self, map: np.ndarray, num_agents: int, evaporation_rate=0.1, alpha=1, beta=2, **kwargs):
+    def __init__(
+        self,
+        map: np.ndarray,
+        num_agents: int,
+        evaporation_rate=0.1,
+        alpha=1,
+        beta=2,
+        **kwargs
+    ):
         """Initialize the ACO algorithm state.
 
         Args:
@@ -24,7 +33,8 @@ class AntColony(Algorithm):
         self.alpha = alpha
         self.beta = beta
         self.pheromone = np.ones(map.shape)
-        
+        self.agentswork = [0.0 for _ in range(num_agents)]
+
         self.tabu_lists = [[] for _ in range(num_agents)]
 
     # Evaporate pheromone and add random noise
@@ -37,7 +47,7 @@ class AntColony(Algorithm):
             - Adds uniform random noise in [0, 0.01] per cell to avoid stagnation.
         """
         self.evaporation_rate = min(self.evaporation_rate + 0.0005, 0.5)
-        self.pheromone *= (1 - self.evaporation_rate)
+        self.pheromone *= 1 - self.evaporation_rate
         self.pheromone += np.random.uniform(0, 0.01, self.pheromone.shape)
 
     # Move agents based on pheromone and idleness
@@ -58,9 +68,16 @@ class AntColony(Algorithm):
         # Each agent moves to a neighboring cell based on pheromone and idleness
         for i, (x, y) in enumerate(self.agents):
             if random.random() < 0.05:
-                neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
-                neighbors = [(nx, ny) for nx, ny in neighbors
-                             if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0]
+                neighbors = [
+                    (x + dx, y + dy) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+                ]
+                neighbors = [
+                    (nx, ny)
+                    for nx, ny in neighbors
+                    if 0 <= nx < self.map.shape[0]
+                    and 0 <= ny < self.map.shape[1]
+                    and self.map[nx, ny] == 0
+                ]
                 if neighbors:
                     new_pos = random.choice(neighbors)
                     self.agents[i] = new_pos
@@ -71,10 +88,17 @@ class AntColony(Algorithm):
                         self.tabu_lists[i].pop(0)
                 continue
 
-            neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
-            neighbors = [(nx, ny) for nx, ny in neighbors
-                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0
-                         and (nx, ny) not in self.tabu_lists[i]]
+            neighbors = [
+                (x + dx, y + dy) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            ]
+            neighbors = [
+                (nx, ny)
+                for nx, ny in neighbors
+                if 0 <= nx < self.map.shape[0]
+                and 0 <= ny < self.map.shape[1]
+                and self.map[nx, ny] == 0
+                and (nx, ny) not in self.tabu_lists[i]
+            ]
 
             if not neighbors:
                 self.tabu_lists[i] = []
@@ -88,7 +112,7 @@ class AntColony(Algorithm):
 
             total_prob = sum(probs)
             if total_prob == 0:
-                probs = [1/len(probs)] * len(probs)
+                probs = [1 / len(probs)] * len(probs)
             else:
                 probs = [p / total_prob for p in probs]
 
@@ -99,6 +123,8 @@ class AntColony(Algorithm):
                 self.pheromone[new_pos] += 2.0
             else:
                 self.pheromone[new_pos] += 1
+
+            self.agentswork[i] += self.idleness[new_pos]
 
             self.idleness[new_pos] = 0
 

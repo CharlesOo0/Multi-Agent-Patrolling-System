@@ -45,8 +45,18 @@ class StatsPage(Page):
             return
         w, h = screen.get_size()
         bw, bh, gap = 160, 46, 12
-        self._btn_home = Button(20, 20, 160, 46, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY)
-        self._btn_rerun = Button(20 + 160 + gap, 20, bw, bh, "Relancer", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_home = Button(
+            20, 20, 160, 46, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY
+        )
+        self._btn_rerun = Button(
+            20 + 160 + gap,
+            20,
+            bw,
+            bh,
+            "Relancer",
+            self.utils.GRAY,
+            self.utils.LIGHT_GRAY,
+        )
         self._ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -67,10 +77,28 @@ class StatsPage(Page):
     def _draw_axes(self, surface: pygame.Surface, rect: pygame.Rect) -> None:
         pygame.draw.rect(surface, self.utils.BLACK, rect, 1)
         # Axes
-        pygame.draw.line(surface, self.utils.BLACK, (rect.left + 40, rect.bottom - 30), (rect.right - 10, rect.bottom - 30), 2)
-        pygame.draw.line(surface, self.utils.BLACK, (rect.left + 40, rect.top + 10), (rect.left + 40, rect.bottom - 30), 2)
+        pygame.draw.line(
+            surface,
+            self.utils.BLACK,
+            (rect.left + 40, rect.bottom - 30),
+            (rect.right - 10, rect.bottom - 30),
+            2,
+        )
+        pygame.draw.line(
+            surface,
+            self.utils.BLACK,
+            (rect.left + 40, rect.top + 10),
+            (rect.left + 40, rect.bottom - 30),
+            2,
+        )
 
-    def _plot_line(self, surface: pygame.Surface, rect: pygame.Rect, data: List[float], color=(30, 144, 255)) -> None:
+    def _plot_line(
+        self,
+        surface: pygame.Surface,
+        rect: pygame.Rect,
+        data: List[float],
+        color=(30, 144, 255),
+    ) -> None:
         if not data:
             return
         vals = np.array(data, dtype=float)
@@ -85,7 +113,13 @@ class StatsPage(Page):
         if len(points) >= 2:
             pygame.draw.lines(surface, color, False, points, 2)
 
-    def _plot_bars(self, surface: pygame.Surface, rect: pygame.Rect, bars: List[float], color=(100, 149, 237)) -> None:
+    def _plot_bars(
+        self,
+        surface: pygame.Surface,
+        rect: pygame.Rect,
+        bars: List[float],
+        color=(100, 149, 237),
+    ) -> None:
         if not bars:
             return
         n = len(bars)
@@ -106,7 +140,9 @@ class StatsPage(Page):
         self._ensure_ui(screen)
         screen.fill(self.utils.WHITE)
 
-        title = self.font.render("Statistiques de la simulation", True, self.utils.BLACK)
+        title = self.font.render(
+            "Statistiques de la simulation", True, self.utils.BLACK
+        )
         screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 20))
 
         # Boutons
@@ -116,7 +152,9 @@ class StatsPage(Page):
             self._btn_rerun.draw(screen)
 
         if not self.results:
-            msg = self.small.render("Aucune donnée de simulation.", True, self.utils.BLACK)
+            msg = self.small.render(
+                "Aucune donnée de simulation.", True, self.utils.BLACK
+            )
             screen.blit(msg, (50, 100))
             return
 
@@ -125,6 +163,7 @@ class StatsPage(Page):
         steps = int(self.results.get("steps", 0))
         events = int(self.results.get("event_count", 0))
         map_shape = self.results.get("map_shape", (0, 0))
+
         info_y = 90
         info_lines = [
             f"Algorithme: {algo}",
@@ -137,8 +176,141 @@ class StatsPage(Page):
             screen.blit(txt, (50, info_y + i * 22))
 
         # Graphique 1: moyenne d'oisiveté dans le temps
-        g1_rect = pygame.Rect(50, 200, screen.get_width() - 100, 180)
+        avg = self.results.get("average_idleness_history", []) or []
+        g1_rect = pygame.Rect(50, 250, (screen.get_width() - 100) / 2, 180)
         self._draw_axes(screen, g1_rect)
-        self._plot_line(screen, g1_rect, self.results.get("average_idleness_history", []))
-        g1_label = self.small.render("Moyenne d'oisiveté", True, self.utils.BLACK)
+        self._plot_line(screen, g1_rect, avg)
+        # labels
+        x_lbl = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        screen.blit(
+            x_lbl,
+            (
+                g1_rect.left + g1_rect.width // 2 - x_lbl.get_width() // 2,
+                g1_rect.bottom - 18,
+            ),
+        )
+        y_lbl_surf = self.small.render("Valeur", True, self.utils.BLACK)
+        y_lbl = pygame.transform.rotate(y_lbl_surf, 90)
+        screen.blit(
+            y_lbl,
+            (
+                g1_rect.left + 8,
+                g1_rect.top + g1_rect.height // 2 - y_lbl.get_height() // 2,
+            ),
+        )
+        last_avg = f"{avg[-1]:.2f}" if avg else "n/a"
+        g1_label = self.small.render(
+            f"Moyenne d'oisiveté: {last_avg} points", True, self.utils.BLACK
+        )
         screen.blit(g1_label, (g1_rect.left, g1_rect.top - 20))
+
+        # Graphique 2: maximum d'oisiveté dans le temps
+        max_hist = self.results.get("maximum_idleness_history", []) or []
+        g2_rect = pygame.Rect(
+            50 + (screen.get_width() - 100) / 2,
+            250,
+            (screen.get_width() - 100) / 2,
+            180,
+        )
+        self._draw_axes(screen, g2_rect)
+        # use a different color for the max line
+        self._plot_line(screen, g2_rect, max_hist, color=(220, 20, 60))
+        # labels
+        x_lbl2 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        screen.blit(
+            x_lbl2,
+            (
+                g2_rect.left + g2_rect.width // 2 - x_lbl2.get_width() // 2,
+                g2_rect.bottom - 18,
+            ),
+        )
+        y_lbl2_surf = self.small.render("Valeur", True, self.utils.BLACK)
+        y_lbl2 = pygame.transform.rotate(y_lbl2_surf, 90)
+        screen.blit(
+            y_lbl2,
+            (
+                g2_rect.left + 8,
+                g2_rect.top + g2_rect.height // 2 - y_lbl2.get_height() // 2,
+            ),
+        )
+        last_max = f"{max_hist[-1]:.2f}" if max_hist else "n/a"
+        g2_label = self.small.render(
+            f"Maximum d'oisiveté: {last_max} points", True, self.utils.BLACK
+        )
+        screen.blit(g2_label, (g2_rect.left, g2_rect.top - 20))
+
+        # Graphique 3: couverture totale dans le temps
+        total_cov = self.results.get("total_coverage_history", []) or []
+        g3_rect = pygame.Rect(
+            50, g2_rect.bottom + 50, (screen.get_width() - 100) / 2, 180
+        )
+        self._draw_axes(screen, g3_rect)
+        # use a different color for the total coverage line
+        self._plot_line(screen, g3_rect, total_cov, color=(220, 20, 60))
+        # labels
+        x_lbl3 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        screen.blit(
+            x_lbl3,
+            (
+                g3_rect.left + g3_rect.width // 2 - x_lbl3.get_width() // 2,
+                g3_rect.bottom - 18,
+            ),
+        )
+        y_lbl3_surf = self.small.render("Couverture", True, self.utils.BLACK)
+        y_lbl3 = pygame.transform.rotate(y_lbl3_surf, 90)
+        screen.blit(
+            y_lbl3,
+            (
+                g3_rect.left + 8,
+                g3_rect.top + g3_rect.height // 2 - y_lbl3.get_height() // 2,
+            ),
+        )
+        last_total = f"{total_cov[-1]:.2f}" if total_cov else "n/a"
+        g3_label = self.small.render(
+            f"Couverture totale: {last_total}", True, self.utils.BLACK
+        )
+        screen.blit(g3_label, (g3_rect.left, g3_rect.top - 20))
+
+        # Graphique 4: Coverage par agent
+        cov_hist = self.results.get("coverage_by_agent_history", []) or []
+        g4_rect = pygame.Rect(
+            50 + (screen.get_width() - 100) / 2,
+            g2_rect.bottom + 50,
+            (screen.get_width() - 100) / 2,
+            180,
+        )
+        g4_label = self.small.render("Couverture par agent", True, self.utils.BLACK)
+        screen.blit(g4_label, (g4_rect.left, g4_rect.top - 20))
+        self._draw_axes(screen, g4_rect)
+        # labels
+        x_lbl4 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        screen.blit(
+            x_lbl4,
+            (
+                g4_rect.left + g4_rect.width // 2 - x_lbl4.get_width() // 2,
+                g4_rect.bottom - 18,
+            ),
+        )
+        y_lbl4_surf = self.small.render("Couverture", True, self.utils.BLACK)
+        y_lbl4 = pygame.transform.rotate(y_lbl4_surf, 90)
+        screen.blit(
+            y_lbl4,
+            (
+                g4_rect.left + 8,
+                g4_rect.top + g4_rect.height // 2 - y_lbl4.get_height() // 2,
+            ),
+        )
+        # Palette of colors to cycle through for each agent
+        palette = [
+            (30, 144, 255),  # dodger blue
+            (220, 20, 60),  # crimson
+            (34, 139, 34),  # forest green
+            (255, 140, 0),  # dark orange
+            (148, 0, 211),  # dark violet
+            (255, 105, 180),  # hot pink
+            (70, 130, 180),  # steel blue
+        ]
+        for i, agent_hist in enumerate(cov_hist):
+            color = palette[i % len(palette)]
+            self._plot_line(screen, g4_rect, agent_hist or [], color=color)
+            # draw a small legend for each agent above the graph

@@ -9,7 +9,7 @@ import numpy as np
 from ui.components.utils import viz_utils
 from ui.routes.Simulation.visualization import Visualization
 from maps.MapLoader import MapLoader
-from algorithm import Heuristic, AntColony # default; user can extend later
+from algorithm import Heuristic, AntColony  # default; user can extend later
 from ui.config import sim_config
 
 from ui.routes.base import Page
@@ -18,7 +18,11 @@ from ui.routes.base import Page
 class SimPage(Page):
     """Simulation page embedding the existing Visualization UI."""
 
-    def __init__(self, go_home: Callable[[], None], go_stats: Callable[[dict], None] | None = None):
+    def __init__(
+        self,
+        go_home: Callable[[], None],
+        go_stats: Callable[[dict], None] | None = None,
+    ):
         self.utils = viz_utils()
         self.go_home = go_home
         self.go_stats = go_stats
@@ -29,10 +33,10 @@ class SimPage(Page):
         self._sim_accum: float = 0.0
 
     def on_enter(self, prev: Optional[str] = None) -> None:
-        # Initialize viz and algorithm based on current screen size and default map
         screen = pygame.display.get_surface()
         if screen is None:
             screen = pygame.display.set_mode((1280, 800), pygame.RESIZABLE)
+        # Load default map
         # Load default map
         loader = MapLoader()
         MAP = loader.load(sim_config.map_name)
@@ -45,9 +49,30 @@ class SimPage(Page):
             results = {
                 "algorithm_name": type(self.algorithm).__name__,
                 "steps": int(getattr(self.algorithm, "step_count", 0)),
-                "average_idleness_history": list(getattr(self.algorithm, "average_idleness_history", [])),
+                "average_idleness_history": list(
+                    getattr(self.algorithm, "average_idleness_history", [])
+                ),
+                "maximum_idleness_history": list(
+                    getattr(self.algorithm, "maximum_idleness_history", [])
+                ),
+                "coverage_by_agent": list(
+                    getattr(self.algorithm, "coverage_by_agent", [])
+                ),
+                "agent_work_history": list(
+                    getattr(self.algorithm, "agentswork_history", [])
+                ),
+                "coverage_by_agent_history": list(
+                    getattr(self.algorithm, "coverage_by_agent_history", [])
+                ),
+                "total_coverage_history": list(
+                    getattr(self.algorithm, "total_coverage_history", [])
+                ),
                 "event_count": int(len(getattr(self.algorithm, "event_history", []))),
-                "map_shape": tuple(self.algorithm.map.shape) if hasattr(self.algorithm, "map") else (0, 0),
+                "map_shape": (
+                    tuple(self.algorithm.map.shape)
+                    if hasattr(self.algorithm, "map")
+                    else (0, 0)
+                ),
             }
             if callable(self.go_stats):
                 self.go_stats(results)
@@ -73,7 +98,10 @@ class SimPage(Page):
 
         # Back button in bottom bar area (left corner)
         from ui.components.button import Button
-        self._back_btn = Button(20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY)
+
+        self._back_btn = Button(
+            20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY
+        )
         self._sim_accum = 0.0
 
     def on_exit(self, next: Optional[str] = None) -> None:
