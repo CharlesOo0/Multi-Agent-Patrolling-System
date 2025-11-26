@@ -4,6 +4,7 @@ import random
 from typing import List, Tuple
 from events import EventManager
 
+
 class Algorithm(ABC):
     """Abstract base class for multi-agent patrolling algorithms.
 
@@ -29,22 +30,27 @@ class Algorithm(ABC):
 
         # Initialize agent positions
         self.agents = self._initialize_agent_positions()
-        
+
         # Simulation speed and events configuration
         self.base_event_spawn_prob: float = float(kwargs.get("event_spawn_prob", 1))
         self.idleness_growth: float = float(kwargs.get("iddleness_growth", 0.01))
 
         # Events manager (CS:GO-like) to influence idleness each step
         # Scale spawn probability inverse to simulation speed so real-time rate stays stable
-        self.events = EventManager(
-            spawn_prob=self.base_event_spawn_prob
-        )
-        
+        self.events = EventManager(spawn_prob=self.base_event_spawn_prob)
+
         # Tracking variables
         self.step_count = 0
-        self.total_coverage = 0.0
+        self.total_coverage_history: List[float] = []
         self.visited_cells = set()
+        self.coverage_by_agent_history: List[List[float]] = [
+            [] for _ in range(self.num_agents)
+        ]
         self.average_idleness_history: List[float] = []
+        self.maximum_idleness_history: List[float] = []
+        self.agentswork_history: List[List[float]] = [
+            [] for _ in range(self.num_agents)
+        ]
 
         # History for visualization logs panel
         self.event_history: List[dict] = []
@@ -54,14 +60,16 @@ class Algorithm(ABC):
         spawned = self.events.maybe_spawn_event(self.map)
         if spawned is not None:
             # Log event with metadata
-            self.event_history.append({
-                "step": self.step_count,
-                "type": spawned.type,
-                "position": spawned.position,
-                "magnitude": float(spawned.magnitude),
-                "radius": int(spawned.radius),
-                "ttl": int(spawned.ttl),
-            })
+            self.event_history.append(
+                {
+                    "step": self.step_count,
+                    "type": spawned.type,
+                    "position": spawned.position,
+                    "magnitude": float(spawned.magnitude),
+                    "radius": int(spawned.radius),
+                    "ttl": int(spawned.ttl),
+                }
+            )
         self.events.apply_events(self.idleness)
 
     def _update_statistics(self) -> None:
@@ -71,14 +79,62 @@ class Algorithm(ABC):
         """
         for agent_pos in self.agents:
             self.visited_cells.add(agent_pos)
-                
+
         total_free_cells = np.sum(self.map == 0)
         visited_cells_count = len(self.visited_cells)
-        self.total_coverage = visited_cells_count / total_free_cells if total_free_cells > 0 else 0.0
+        print(visited_cells_count, total_free_cells)
+        self.total_coverage_history.append(
+            visited_cells_count / total_free_cells if total_free_cells > 0 else 0.0
+        )
 
-        average_idleness = np.mean(self.idleness[self.map == 0])  # Only consider free cells
+        # Convert visited set to a list for deterministic enumeration and assign
+        # visited cells to agents in a round-robin fashion to compute per-agent metrics.
+        visited_list = list(self.visited_cells)
+
+        for i in range(self.num_agents):
+            agent_visited = {
+                pos
+                for idx, pos in enumerate(visited_list)
+                if idx % self.num_agents == i
+            }
+            coverage = (
+                len(agent_visited) / total_free_cells if total_free_cells > 0 else 0.0
+            )
+            self.coverage_by_agent_history[i].append(coverage)
+
+        for i in range(self.num_agents):
+            # Sum idleness of the visited cells assigned to this agent this step
+            current_sum = sum(
+                float(self.idleness[pos])
+                for idx, pos in enumerate(visited_list)
+                if idx % self.num_agents == i
+            )
+            # Accumulate on top of the previous cumulative value (or start at 0.0)
+            prev_cumulative = (
+                self.agentswork_history[i][-1] if self.agentswork_history[i] else 0.0
+            )
+            self.agentswork_history[i].append(prev_cumulative + current_sum)
+
+        average_idleness = np.mean(
+            self.idleness[self.map == 0]
+        )  # Only consider free cells
         self.average_idleness_history.append(average_idleness)
-    
+        maximum_idleness = np.max(
+            self.idleness[self.map == 0]
+        )  # Only consider free cells
+        self.maximum_idleness_history.append(maximum_idleness)
+
+        # Print latest per-agent coverage values (None if agent has no history)
+        coverage_last = [
+            hist[-1] if hist else None for hist in self.coverage_by_agent_history
+        ]
+        print(
+            f"Step {self.step_count}:, Avg Idleness={average_idleness:.3f}, Max Idleness={maximum_idleness:.3f}, coverage_by_agent={coverage_last}"
+        )
+        # Print last value of each agent's work history (None if empty)
+        last_values = [hist[-1] if hist else None for hist in self.agentswork_history]
+        print(f"Agents' last work values: {last_values}")
+
     @abstractmethod
     def run_step(self) -> None:
         """Execute one step, increasing idleness and step count.
@@ -89,7 +145,7 @@ class Algorithm(ABC):
         # Update idleness for all cells
         self.idleness += self.idleness_growth
         self.step_count += 1
-        
+
         # Apply events effects
         self._run_event_step()
         # Update statistics
@@ -100,14 +156,16 @@ class Algorithm(ABC):
         self.idleness = np.zeros((self.width, self.height))
         self.agents = self._initialize_agent_positions()
         # Recreate EventManager with spawn prob matching current simulation speed
-        self.events = EventManager(
-            spawn_prob=self.base_event_spawn_prob
-        )
+        self.events = EventManager(spawn_prob=self.base_event_spawn_prob)
         self.step_count = 0
-        self.total_coverage = 0.0
+        self.total_coverage_history = []
+        self.coverage_by_agent_history = [[] for _ in range(self.num_agents)]
+        self.average_idleness_history = []
+        self.maximum_idleness_history = []
+        self.agentswork_history = [[] for _ in range(self.num_agents)]
         self.visited_cells.clear()
         self.event_history.clear()
-    
+
     def _initialize_agent_positions(self) -> List[Tuple[int, int]]:
         """Randomly initialize unique agent positions on free cells within bounds.
 
@@ -118,7 +176,9 @@ class Algorithm(ABC):
         if self.num_agents > self.width * self.height:
             # Fallback: reduce agents to fit in the grid
             self.num_agents = self.width * self.height
-            print(f"Warning: Reduced number of agents to {self.num_agents} to fit in the grid.")
+            print(
+                f"Warning: Reduced number of agents to {self.num_agents} to fit in the grid."
+            )
 
         positions = []
 
@@ -131,4 +191,4 @@ class Algorithm(ABC):
                     positions.append((x, y))
                     break
 
-        return positions     
+        return positions
