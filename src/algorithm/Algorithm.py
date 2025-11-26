@@ -135,9 +135,85 @@ class Algorithm(ABC):
         last_values = [hist[-1] if hist else None for hist in self.agentswork_history]
         print(f"Agents' last work values: {last_values}")
 
+    def _check_position_within_bounds(self, position: Tuple[int, int]) -> bool:
+        """Check if a position is within the map bounds."""
+        x, y = position
+        return 0 <= x < self.width and 0 <= y < self.height
+    
+    def _pick_random_valid_neighbor(self, agent_index: int, occupied: set = None) -> Tuple[int, int]:
+        """Pick a random valid neighboring cell for an agent, avoiding 'occupied' cells if provided.
+        
+        Args:
+            agent_index: Index of the agent for which to pick a neighbor.
+            occupied: Optional set of positions to avoid (e.g., other agents' targets).
+        
+        Returns:
+            A valid neighboring position (x, y) or the agent's current position if none found.
+        """
+        occupied = occupied or set()
+        x, y = self.agents[agent_index]
+        neighbors = [
+            (x + dx, y + dy)
+            for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
+            if 0 <= x + dx < self.width
+            and 0 <= y + dy < self.height
+            and self.map[x + dx, y + dy] == 0
+            and (x + dx, y + dy) not in occupied
+        ]
+
+        while neighbors:
+            random_pos = random.choice(neighbors)
+            neighbors.remove(random_pos)
+            if self.map[random_pos] == 0 and random_pos not in self.agents and random_pos not in occupied:
+                return random_pos
+
+        return self.agents[agent_index]  # No valid move, stay in place
+
+    def _resolve_conflict(self, new_positions: list[Tuple[int, int]]) -> list[Tuple[int, int]]:
+        """
+        Resolve conflicts where :
+            - Multiple agents attempt to occupy the same cell.
+            - An agent attempts to move into an obstacle or out of bounds.
+            - Or any other invalid move.
+        
+        Args:
+            new_positions: Proposed new positions for each agent.
+
+        Returns:
+            Finalized positions for each agent after conflict resolution.
+        """
+        # Track occupied positions to detect conflicts
+        occupied = set()
+        final_positions = []
+        # For each agent's proposed new position
+        for i, pos in enumerate(new_positions):
+            x, y = pos
+            # If position is valid and not occupied, accept it
+            if (
+                self._check_position_within_bounds(pos)
+                and self.map[x, y] == 0
+                and pos not in occupied
+            ):
+                final_positions.append(pos)
+                occupied.add(pos)
+            # Otherwise, pick a random valid neighbor
+            else:
+                chosen = self._pick_random_valid_neighbor(i, occupied)
+                final_positions.append(chosen)
+                occupied.add(chosen)
+        return final_positions
+    
+    def _reset_idleness_at_positions(self, positions: list[Tuple[int, int]]) -> None:
+        """Reset idleness values at the specified positions to zero."""
+        for pos in positions:
+            self.idleness[pos] = 0
+
     @abstractmethod
-    def run_step(self) -> None:
+    def run_step(self, new_positions: list[tuple[int, int]]) -> list[tuple[int, int]]:
         """Execute one step, increasing idleness and step count.
+
+        Args:
+            new_positions: The new positions of the agents after the algorithm's compute their movements.
 
         Subclasses should call 'super().run_step()' first, then apply their
         movement/coordination logic and any additional state updates.
@@ -150,6 +226,12 @@ class Algorithm(ABC):
         self._run_event_step()
         # Update statistics
         self._update_statistics()
+
+        # Update agent positions
+        self.agents = self._resolve_conflict(new_positions)
+        self._reset_idleness_at_positions(self.agents)
+
+        return self.agents
 
     def reset(self) -> None:
         """Reset algorithm internal state for a fresh run (used by UI Reset)."""

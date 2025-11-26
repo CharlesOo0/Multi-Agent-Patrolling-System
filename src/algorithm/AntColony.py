@@ -38,76 +38,96 @@ class AntColony(Algorithm):
         self.tabu_lists = [[] for _ in range(num_agents)]
 
     # Evaporate pheromone and add random noise
-    def update_pheromone(self):
-        """Apply pheromone evaporation and inject small noise to encourage exploration.
+    def update_pheromone(self, new_positions: list[tuple[int, int]]):
+        """Apply pheromones side effects and evaporation and inject small noise to encourage exploration.
 
         Side effects:
             - Increases evaporation rate slightly over time (capped at 0.5).
             - Scales down pheromone by (1 - evaporation_rate).
             - Adds uniform random noise in [0, 0.01] per cell to avoid stagnation.
         """
+        # Apply movement side-effects now that `self.agents` contains resolved positions
+        for i, pos in enumerate(new_positions):
+            x, y = pos
+            # Sanity: skip obstacles (shouldn't happen after resolution)
+            if self.map[x, y] == 1:
+                continue
+
+            # Increase pheromone according to idleness prior to visiting (idleness
+            # has already been incremented by super().run_step)
+            if self.idleness[pos] > np.mean(self.idleness):
+                self.pheromone[pos] += 2.0
+            else:
+                self.pheromone[pos] += 1.0
+
+            # Accumulate agent workload and reset idleness at visited cell
+            self.agentswork[i] += self.idleness[pos]
+
+            # Update tabu list for the agent
+            self.tabu_lists[i].append(pos)
+            if len(self.tabu_lists[i]) > 5:
+                self.tabu_lists[i].pop(0)
+
+        # Finally evaporate/add noise to pheromones
         self.evaporation_rate = min(self.evaporation_rate + 0.0005, 0.5)
         self.pheromone *= 1 - self.evaporation_rate
         self.pheromone += np.random.uniform(0, 0.01, self.pheromone.shape)
 
     # Move agents based on pheromone and idleness
-    def move_agents(self):
+    def compute_move_agents(self) -> list[tuple[int, int]]:
         """Move each agent to a neighboring cell using pheromone and idleness cues.
 
         Policy:
-            - With small probability, choose a random valid neighbor (exploration).
-            - Otherwise, sample a neighbor proportionally to (pheromone^alpha) * (idleness+1)^beta,
-              excluding a short tabu list to reduce immediate backtracking.
-
-        Side effects:
-            - Updates self.agents with new positions.
-            - Resets idleness at visited cells to 0.
-            - Increases pheromone at visited cells (more if above-average idleness).
-            - Updates the per-agent tabu lists (limited length 5).
+            - With small probability (5%), explore randomly.
+            - Otherwise, select neighbor probabilistically based on:
+              (pheromone^alpha) * (idleness^beta), excluding short-term tabu list.
+        
+        Returns:
+            The new positions of the agents after movement.
         """
-        # Each agent moves to a neighboring cell based on pheromone and idleness
+        new_positions = []
+
+        # Compute new positions for each agent
         for i, (x, y) in enumerate(self.agents):
+            # With small probability, explore randomly
             if random.random() < 0.05:
                 neighbors = [
                     (x + dx, y + dy) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
                 ]
-                neighbors = [
-                    (nx, ny)
-                    for nx, ny in neighbors
-                    if 0 <= nx < self.map.shape[0]
-                    and 0 <= ny < self.map.shape[1]
-                    and self.map[nx, ny] == 0
-                ]
+
                 if neighbors:
                     new_pos = random.choice(neighbors)
-                    self.agents[i] = new_pos
-                    self.pheromone[new_pos] += 1
-                    self.idleness[new_pos] = 0
+                    new_positions.append(new_pos)
                     self.tabu_lists[i].append(new_pos)
+
+                    # Safe-guard tabu list length
                     if len(self.tabu_lists[i]) > 5:
                         self.tabu_lists[i].pop(0)
+                else:
+                    new_positions.append((x, y))
                 continue
 
             neighbors = [
                 (x + dx, y + dy) for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
             ]
-            neighbors = [
-                (nx, ny)
-                for nx, ny in neighbors
-                if 0 <= nx < self.map.shape[0]
-                and 0 <= ny < self.map.shape[1]
-                and self.map[nx, ny] == 0
-                and (nx, ny) not in self.tabu_lists[i]
-            ]
 
-            if not neighbors:
-                self.tabu_lists[i] = []
-                continue
+            # Exclude short-term tabu for move proposal only
+            valid_neighbors = [n for n in neighbors if n not in self.tabu_lists[i]]
+            if not valid_neighbors:
+                valid_neighbors = neighbors
 
             probs = []
-            for nx, ny in neighbors:
-                pheromone_effect = self.pheromone[nx, ny] ** self.alpha
-                idleness_effect = (self.idleness[nx, ny] + 1) ** self.beta
+            for nx, ny in valid_neighbors:
+                # Safeguard against out-of-bounds
+                try:
+                    idln = self.idleness[nx, ny]
+                    phero = self.pheromone[nx, ny]
+                except IndexError:
+                    probs.append(0)
+                    continue
+
+                pheromone_effect = phero ** self.alpha
+                idleness_effect = (idln + 1) ** self.beta
                 probs.append(pheromone_effect * idleness_effect)
 
             total_prob = sum(probs)
@@ -116,25 +136,23 @@ class AntColony(Algorithm):
             else:
                 probs = [p / total_prob for p in probs]
 
-            new_pos = random.choices(neighbors, weights=probs, k=1)[0]
-            self.agents[i] = new_pos
+            new_pos = random.choices(valid_neighbors, weights=probs, k=1)[0]
+            new_positions.append(new_pos)
 
-            if self.idleness[new_pos] > np.mean(self.idleness):
-                self.pheromone[new_pos] += 2.0
-            else:
-                self.pheromone[new_pos] += 1
-
-            self.agentswork[i] += self.idleness[new_pos]
-
-            self.idleness[new_pos] = 0
-
-            self.tabu_lists[i].append(new_pos)
-            if len(self.tabu_lists[i]) > 5:
-                self.tabu_lists[i].pop(0)
+        return new_positions
 
     # New method to run a single step of the ACO algorithm
-    def run_step(self):
-        """Run a single ACO step: update idleness, move agents, and update pheromones."""
-        super().run_step()
-        self.move_agents()
-        self.update_pheromone()
+    def run_step(self) -> None:
+        """Run a single ACO step.
+
+        Sequence:
+        1. Propose moves (no side-effects) via `move_agents()`
+        2. Call `super().run_step(proposed_moves)` which increases idleness,
+           handles events, updates statistics and resolves conflicts setting
+           `self.agents` to the final positions.
+        3. Apply pheromone updates and side-effects via `update_pheromone()`.
+        """
+        proposed = self.compute_move_agents()
+        new_positions = super().run_step(proposed)
+
+        self.update_pheromone(new_positions)
