@@ -1,5 +1,6 @@
 import pygame
 import sys
+from pathlib import Path
 import time
 from typing import Tuple, List, Dict, Any, Optional, Callable
 from ui.components.button import Button
@@ -8,7 +9,7 @@ from algorithm import Algorithm
 import numpy as np
 
 class Visualization:
-    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray) -> None:
+    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int) -> None:
         """Initialize the visualization window and layout for the grid.
 
         Args:
@@ -19,8 +20,9 @@ class Visualization:
 
         # Map and grid parameters
         self.CELL_SIZE: int = 20
-        self.MARGIN: int = 2
+        self.MARGIN: int = 1
         self.map: np.ndarray = map
+        self.background_image: pygame.Surface = pygame.image.load(map_png).convert_alpha()
 
         # Colors and utils
         self.utils: viz_utils = viz_utils()
@@ -34,6 +36,10 @@ class Visualization:
         # Dimensions of the grid in pixels
         self.grid_width: int = cols * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
         self.grid_height: int = rows * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
+        
+        #Offset        
+        self.map_offset_x = offset_x
+        self.map_offset_y = offset_y
 
         # Minimum window size to contain grid + right log panel + bottom bar
         min_content_w = self.grid_width + self.LOG_PANEL_W + self.PADDING * 3
@@ -65,6 +71,7 @@ class Visualization:
         # Callback appelé quand l'utilisateur termine la simulation via le bouton
         self.on_finish = None
 
+
     def _recompute_layout(self, win_w: int, win_h: int) -> None:
         """Recompute layout rectangles and grid origin based on window size."""
         # Left content area width (for grid): exclude padding and right log panel
@@ -93,7 +100,8 @@ class Visualization:
         )
 
     def draw_grid(self, algorithm: Algorithm) -> None:
-        """Draw the map cells colored by idleness and overlay agent positions.
+        """Draw the map cells colored by idleness and overlay agent positions and use 
+            the background map png corresponding to the grid.
 
         Args:
             algorithm: The running algorithm instance providing idleness and agents.
@@ -108,43 +116,53 @@ class Visualization:
 
         base_x = self.grid_origin[0]
         base_y = self.grid_origin[1]
+
+        #Print map png behind the grid
+        self.screen.blit(self.background_image, (base_x, base_y))
+
+        overlay = pygame.Surface(self.background_image.get_size(), pygame.SRCALPHA)
+
         for x in range(self.map.shape[0]):
             for y in range(self.map.shape[1]):
                 
 
                 if self.map[x, y] == 1:  # Obstacle
-                    idleness_color = self.utils.BLACK
+                    color = (*self.utils.BLACK, 150)
+                    
                 else: # Free cell
                     cell_idle: float = float(idleness[x, y])
                     ratio = min(1.0, cell_idle / 10.0)
 
                     red = 255
                     green_blue = int(255 * (1 - ratio))
-                    idleness_color = (red, green_blue, green_blue)
+                    color = (red, green_blue, green_blue,150)
 
                 pygame.draw.rect(
-                    self.screen,
-                    idleness_color,
+                    overlay,
+                    color,
                     [
-                        base_x + (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
-                        base_y + (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
+                        (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN + self.map_offset_x,
+                        (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN + self.map_offset_y,
                         self.CELL_SIZE,
                         self.CELL_SIZE,
                     ],
                 )
 
+                
                 # Grid lines
-                pygame.draw.rect(
-                    self.screen,
-                    (0, 0, 0),
-                    [
-                        base_x + (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
-                        base_y + (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
-                        self.CELL_SIZE,
-                        self.CELL_SIZE,
-                    ],
-                    1
-                )
+                #pygame.draw.rect(
+                #    self.screen,
+                #    (0, 0, 0),
+                #    [
+                #        base_x + (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
+                #        base_y + (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
+                #        self.CELL_SIZE,
+                #        self.CELL_SIZE,
+                #    ],
+                #    1
+                # )
+
+        self.screen.blit(overlay, (base_x, base_y))
                 # if use_pheromone:
                 #     cell_pher: float = float(pheromone[x, y])
                 #     pher_ratio: float = (cell_pher / max_pher) if max_pher > 0 else 0.0
