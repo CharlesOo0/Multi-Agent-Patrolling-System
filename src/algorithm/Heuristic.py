@@ -1,6 +1,7 @@
 from typing import Tuple
 import numpy as np
 from algorithm import Algorithm
+import random
 
 class Heuristic(Algorithm):
     """Simple heuristic-based multi-agent patrolling algorithm.
@@ -36,32 +37,43 @@ class Heuristic(Algorithm):
 
         return clusters
 
-    def move_agents(self):
+    def compute_move_agents(self) -> list[tuple[int, int]]:
         """Move each agent to the adjacent cell with the highest idleness.
 
         The move respects map bounds and obstacles. Idleness at the chosen cell is reset.
+
+        Returns:
+            The new positions of the agents after movement.
         """
-        # Make each agent move to the adjacent biggest idleness cell in their cluster and not out of it
+        new_positions = []
+
+        # Compute new positions for each agent sequentially but the agents can't see each others moves
         for i, (x, y) in enumerate(self.agents):
             # Get the cluster boundaries
             neighbors = [(x+dx, y+dy) for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]]
-            neighbors = [(nx, ny) for nx, ny in neighbors
-                         if 0 <= nx < self.map.shape[0] and 0 <= ny < self.map.shape[1] and self.map[nx, ny] == 0]
-
-            if not neighbors:
-                continue
 
             max_idleness = -1
             best_pos = (x, y)
             for nx, ny in neighbors:
-                if self.idleness[nx, ny] > max_idleness:
-                    max_idleness = self.idleness[nx, ny]
+                # Safeguard against out-of-bounds
+                try:
+                    val = self.idleness[nx, ny]
+                except IndexError:
+                    continue
+
+                if val > max_idleness:
+                    max_idleness = val
                     best_pos = (nx, ny)
 
-            self.agents[i] = best_pos
-            self.idleness[best_pos] = 0
+            # If no valid moves found, pick a random neighbor
+            if max_idleness < 0:
+                best_pos = random.choice(neighbors)
+
+            new_positions.append(best_pos)
+
+        return new_positions
 
     def run_step(self) -> None:
         """Run one step: update idleness, then move agents using the heuristic."""
-        super().run_step()
-        self.move_agents()
+        new_pos = self.compute_move_agents()
+        super().run_step(new_pos)
