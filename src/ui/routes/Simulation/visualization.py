@@ -6,6 +6,7 @@ from typing import Tuple, List, Dict, Any, Optional, Callable
 from ui.components.button import Button
 from ui.components.utils import viz_utils
 from algorithm import Algorithm
+import colorsys
 import numpy as np
 
 class Visualization:
@@ -108,11 +109,21 @@ class Visualization:
         """
         idleness: np.ndarray = algorithm.idleness
         max_idle: float = float(idleness.max()) if idleness.size > 0 else 0.0
-
+        class_name = algorithm.__class__.__name__
         # use_pheromone: bool = algorithm.__class__.__name__ == "AntColony" and hasattr(algorithm, "pheromone")
         # if use_pheromone:
         #     pheromone: np.ndarray = algorithm.pheromone  # type: ignore[attr-defined]
         #     max_pher: float = float(pheromone.max()) if pheromone.size > 0 else 0.0
+
+        if class_name == "Heuristic":
+            # Generate distinct colors for each cluster
+            cluster_colors: List[Tuple[int, int, int]] = []
+            for i in range(algorithm.num_agents):
+                hue = i / algorithm.num_agents
+                # Generate RGB from hue (HSV -> RGB), keep saturation/value high for vivid colors
+                r_f, g_f, b_f = colorsys.hsv_to_rgb(hue, 0.85, 0.9)
+                color = (int(r_f * 255), int(g_f * 255), int(b_f * 255))
+                cluster_colors.append(color)
 
         base_x = self.grid_origin[0]
         base_y = self.grid_origin[1]
@@ -128,14 +139,27 @@ class Visualization:
 
                 if self.map[x, y] == 1:  # Obstacle
                     color = (*self.utils.BLACK, 150)
-                    
-                else: # Free cell
+                    border_color = None
+                else:  # Free cell
                     cell_idle: float = float(idleness[x, y])
                     ratio = min(1.0, cell_idle / 10.0)
 
                     red = 255
                     green_blue = int(255 * (1 - ratio))
-                    color = (red, green_blue, green_blue,150)
+
+                    # Fill color stays driven by idleness (preserve visualization)
+                    fill_color = (red, green_blue, green_blue, 150)
+
+                    # For Heuristic, compute a border color from cluster without replacing the fill
+                    border_color = None
+                    if class_name == "Heuristic":
+                        for cluster_idx, cluster in enumerate(algorithm.clusters):
+                            if (x, y) in cluster:
+                                cluster_color = cluster_colors[cluster_idx]
+                                border_color = (*cluster_color, 200)  # slightly opaque border
+                                break
+
+                    color = fill_color
 
                 pygame.draw.rect(
                     overlay,
@@ -147,6 +171,20 @@ class Visualization:
                         self.CELL_SIZE,
                     ],
                 )
+
+                # Draw cluster border on top of the filled cell (if applicable)
+                if border_color is not None:
+                    pygame.draw.rect(
+                        overlay,
+                        border_color,
+                        [
+                            (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN + self.map_offset_x,
+                            (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN + self.map_offset_y,
+                            self.CELL_SIZE,
+                            self.CELL_SIZE,
+                        ],
+                        width=1,
+                    )
 
                 
                 # Grid lines
