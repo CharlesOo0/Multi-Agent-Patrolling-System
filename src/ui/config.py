@@ -27,6 +27,11 @@ class SimConfig:
                 "alpha": 1.0,
                 "beta": 2.0,
             },
+            "AntColonyLecture": {
+                "evaporation_rate": 0.10,
+                "alpha": 1.0,
+                "beta": 2.0,
+            },
         }
     )
 

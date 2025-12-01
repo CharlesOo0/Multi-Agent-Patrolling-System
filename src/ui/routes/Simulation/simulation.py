@@ -95,6 +95,18 @@ class SimPage(Page):
                 event_spawn_prob=spawn_prob,
                 iddleness_growth=float(sim_config.iddleness_growth),
             )
+        elif algo_name == "AntColonyLecture":
+            p = sim_config.algo_params.get("AntColonyLecture", {})
+            self.algorithm = AntColonyLecture(
+                MAP,
+                num_agents,
+                alpha=float(p.get("alpha", 1.0)),
+                beta=float(p.get("beta", 2.0)),
+                rho=float(p.get("evaporation_rate", 0.1)),  # maps old "evaporation_rate" → rho
+                Q=float(p.get("Q", 1.0)),                   # new ACO parameter
+                event_spawn_prob=spawn_prob,
+                iddleness_growth=float(sim_config.iddleness_growth),
+            )
         else:
             self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=spawn_prob)
 

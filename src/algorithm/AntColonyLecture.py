@@ -2,10 +2,13 @@ import numpy as np
 import random
 from .Algorithm import Algorithm
 
-class AntColony(Algorithm):
+class AntColonyLecture(Algorithm):
+    
+    TABU_LENGTH = 15         
+    EXPLORATION_RATE = 0.15  
 
-    def __init__(self, map, num_agents, alpha=1, beta=2, rho=0.1, Q=1.0):
-        super().__init__(map, num_agents)
+    def __init__(self, map, num_agents, alpha=1, beta=2, rho=0.1, Q=1.0, **kwargs):
+        super().__init__(map, num_agents, **kwargs)
         self.alpha = alpha
         self.beta = beta
         self.rho = rho      # evaporation rate
@@ -49,14 +52,42 @@ class AntColony(Algorithm):
         return allowed, probs
 
     def build_solutions(self):
-        """Each ant builds a trajectory of moves."""
         trajectories = []
 
         for i, pos in enumerate(self.agents):
+
+            
+            if random.random() < self.EXPLORATION_RATE:
+                neighbors = [
+                    (pos[0] + dx, pos[1] + dy)
+                    for dx, dy in [(-1,0),(1,0),(0,-1),(0,1)]
+                    if self.in_bounds(pos[0] + dx, pos[1] + dy)
+                       and self.map[pos[0] + dx, pos[1] + dy] == 0
+                ]
+
+                if neighbors:
+                    new_pos = random.choice(neighbors)
+                else:
+                    new_pos = pos
+
+                
+                self.tabu[i].append(new_pos)
+                if len(self.tabu[i]) > self.TABU_LENGTH:
+                    self.tabu[i].pop(0)
+
+                trajectories.append((pos, new_pos))
+                continue
+
+            # Normal ACO-based movement
             allowed, probs = self.compute_transition_probabilities(i, pos)
             new_pos = random.choices(allowed, weights=probs, k=1)[0]
-            trajectories.append((pos, new_pos))
+
+            
             self.tabu[i].append(new_pos)
+            if len(self.tabu[i]) > self.TABU_LENGTH:
+                self.tabu[i].pop(0)
+
+            trajectories.append((pos, new_pos))
 
         return trajectories
 
