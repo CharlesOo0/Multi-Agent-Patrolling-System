@@ -9,7 +9,7 @@ import numpy as np
 from ui.components.utils import viz_utils
 from ui.routes.Simulation.visualization import Visualization
 from maps.MapLoader import MapLoader
-from algorithm import Heuristic, AntColony  # default; user can extend later
+from algorithm import Heuristic, AntColony, AntColonyLecture  # default; user can extend later
 from ui.config import sim_config
 
 from ui.routes.base import Page
