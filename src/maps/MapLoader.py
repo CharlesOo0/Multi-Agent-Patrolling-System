@@ -52,8 +52,8 @@ class MapLoader:
         arr = np.where(arr != 0, 1, 0)
         return arr
 
-    def load_offset(self, filename_or_name: Union[str, Path]) -> np.ndarray:
-        """Return the offset to display the map from JSON.
+    def load_parameters(self, filename_or_name: Union[str, Path]) -> np.ndarray:
+        """Return Parameters to display the map from JSON.
 
         Accepts either a filename (with or without .json) or a Path.
         """
@@ -66,10 +66,13 @@ class MapLoader:
         
         offset_x = data.get("map_offset_x")
         offset_y = data.get("map_offset_y")
-        if offset_x == None or offset_y == None:
-            raise ValueError("Invalid JSON : offset_y or offset_x not found")
+        nbr_rows = data.get("rows")
+        nbr_cols = data.get("cols")
+        cell_size = data.get("cell_size")
+        if offset_x == None or offset_y == None or nbr_rows == None or nbr_cols == None or cell_size == None:
+            raise ValueError("Invalid JSON")
 
-        return offset_x,offset_y
+        return offset_x,offset_y,nbr_rows,nbr_cols,cell_size
 
     def load_png(self, filename_or_name: Union[str, Path]) -> Path:
         """Return the path of the background of the map.

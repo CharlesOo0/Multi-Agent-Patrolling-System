@@ -10,7 +10,7 @@ import colorsys
 import numpy as np
 
 class Visualization:
-    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int) -> None:
+    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int, cell_size : int) -> None:
         """Initialize the visualization window and layout for the grid.
 
         Args:
@@ -20,7 +20,7 @@ class Visualization:
         pygame.init()
 
         # Map and grid parameters
-        self.CELL_SIZE: int = 20
+        self.CELL_SIZE: int = cell_size
         self.MARGIN: int = 1
         self.map: np.ndarray = map
         self.background_image: pygame.Surface = pygame.image.load(map_png).convert_alpha()
@@ -33,10 +33,10 @@ class Visualization:
         self.BOTTOM_BAR_H: int = 60
         self.LOG_PANEL_W: int = 325
 
-        rows, cols = self.map.shape
+        self.rows, self.cols = nbr_rows,nbr_cols
         # Dimensions of the grid in pixels
-        self.grid_width: int = cols * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
-        self.grid_height: int = rows * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
+        self.grid_width: int = self.cols * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
+        self.grid_height: int = self.rows * (self.CELL_SIZE + self.MARGIN) + self.MARGIN #TODO Definir la cell size en fonction de la tailel de la grid. On fiat changer le png de taille
         
         #Offset        
         self.map_offset_x = offset_x
@@ -129,12 +129,12 @@ class Visualization:
         base_y = self.grid_origin[1]
 
         #Print map png behind the grid
-        self.screen.blit(self.background_image, (base_x, base_y))
+        self.screen.blit(self.background_image, (base_x + self.map_offset_x, base_y + self.map_offset_y))
 
         overlay = pygame.Surface(self.background_image.get_size(), pygame.SRCALPHA)
 
-        for x in range(self.map.shape[0]):
-            for y in range(self.map.shape[1]):
+        for x in range(self.rows-1):
+            for y in range(self.cols-1):
                 
 
                 if self.map[x, y] == 1:  # Obstacle
@@ -165,8 +165,8 @@ class Visualization:
                     overlay,
                     color,
                     [
-                        (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN + self.map_offset_x,
-                        (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN + self.map_offset_y,
+                        (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
+                        (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
                         self.CELL_SIZE,
                         self.CELL_SIZE,
                     ],
@@ -178,8 +178,8 @@ class Visualization:
                         overlay,
                         border_color,
                         [
-                            (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN + self.map_offset_x,
-                            (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN + self.map_offset_y,
+                            (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
+                            (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
                             self.CELL_SIZE,
                             self.CELL_SIZE,
                         ],

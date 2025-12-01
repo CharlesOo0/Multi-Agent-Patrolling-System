@@ -3,6 +3,7 @@ from __future__ import annotations
 import pygame
 import json
 from typing import Optional, Callable
+import numpy as np
 
 from ui.components.button import Button
 from ui.components.utils import viz_utils
@@ -35,6 +36,9 @@ class MapEditorPage(Page):
         self.background_image = None
         self.screen = None
 
+        self.MAX_CELL_SIZE = 25
+        self.MIN_CELL_SIZE = 15
+
         #offset and buttons
         self.map_offset_x = 0
         self.map_offset_y = 0
@@ -42,6 +46,12 @@ class MapEditorPage(Page):
         self._btn_right: Button | None = None
         self._btn_up: Button | None = None
         self._btn_bottom: Button | None = None
+        self._btn_add_col: Button | None = None
+        self._btn_add_row: Button | None = None
+        self._btn_del_col: Button | None = None
+        self._btn_del_row: Button | None = None
+        self._btn_incr_cell_size: Button | None = None
+        self._btn_decr_cell_size: Button | None = None
 
     def on_enter(self, prev: Optional[str] = None) -> None:
         self._ready = False
@@ -78,8 +88,13 @@ class MapEditorPage(Page):
             on_change=self._on_map_change,
         )
         
-        cross_x = x0  # left of map
-        cross_y = y0 + 300  # vertically centered-ish
+        cross_x = x0 + 50  # left of map
+        cross_y = y0 + 150  # vertically centered-ish
+
+        menu_x = x0 
+        menu_y = cross_y + 150
+        menu_size_x = 300
+        menu_size_y = 50 
 
         size = 44
         gap = 10
@@ -88,6 +103,13 @@ class MapEditorPage(Page):
         self._btn_left = Button(cross_x, cross_y, size, size, "R", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self._btn_right = Button(cross_x + (size + gap) * 2, cross_y, size, size, "L", self.utils.GRAY, self.utils.LIGHT_GRAY)
 
+        self._btn_add_row = Button(menu_x,menu_y,menu_size_x,menu_size_y,"Add Row", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_del_row = Button(menu_x,menu_y + menu_size_y + gap,menu_size_x,menu_size_y,"Delete Row", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_add_col = Button(menu_x,menu_y + (menu_size_y + gap) * 2,menu_size_x,menu_size_y,"Add Column", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_del_col = Button(menu_x,menu_y + (menu_size_y + gap) * 3,menu_size_x,menu_size_y,"Delete Column", self.utils.GRAY, self.utils.LIGHT_GRAY)
+
+        self._btn_incr_cell_size = Button(menu_x,menu_y +  (menu_size_y + gap) * 4 + gap*2,menu_size_x,menu_size_y,"Increase Cell Size", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_decr_cell_size = Button(menu_x,menu_y +  (menu_size_y + gap) * 5 + gap*2,menu_size_x,menu_size_y,"Decrease Cell Size", self.utils.GRAY, self.utils.LIGHT_GRAY)
 
         self._on_map_change(self._map_selector.value)
 
@@ -101,24 +123,58 @@ class MapEditorPage(Page):
 
             if self._btn_left and self._btn_left.is_clicked(pos, event):
                 self.map_offset_x -= 5
-                self._save_map_offset(self._map_selector.value,'x')
+                self._save_full_map_json(self._map_selector.value)
 
             if self._btn_right and self._btn_right.is_clicked(pos, event):
                 self.map_offset_x += 5                
-                self._save_map_offset(self._map_selector.value,'x')
+                self._save_full_map_json(self._map_selector.value)
 
             if self._btn_bottom and self._btn_bottom.is_clicked(pos, event):
                 self.map_offset_y += 5
-                self._save_map_offset(self._map_selector.value,'y')
+                self._save_full_map_json(self._map_selector.value)
 
             if self._btn_up and self._btn_up.is_clicked(pos, event):
                 self.map_offset_y -= 5
-                self._save_map_offset(self._map_selector.value,'y')
+                self._save_full_map_json(self._map_selector.value)
+
+            if self._btn_add_col and self._btn_add_col.is_clicked(pos, event):
+                self.nbr_col += 1
+                self.map = np.hstack([self.map, np.ones((self.nbr_row-1, 1), dtype=self.map.dtype)])
+                self._save_full_map_json(self._map_selector.value)
+
+            if self._btn_del_col and self._btn_del_col.is_clicked(pos, event):
+                if self.nbr_col > 1:
+                    self.nbr_col -= 1
+                    self.map = self.map[:, :-1]
+                    self._save_full_map_json(self._map_selector.value)
+
+            if self._btn_add_row and self._btn_add_row.is_clicked(pos, event):
+                self.nbr_row += 1
+                new_row = np.ones((1, self.nbr_col), dtype=self.map.dtype)
+                self.map = np.vstack([self.map, new_row])
+                self._save_full_map_json(self._map_selector.value)
+
+            if self._btn_del_row and self._btn_del_row.is_clicked(pos, event):
+                if self.nbr_row > 1:
+                    self.nbr_row -= 1
+                    self.map = self.map[:-1, :]
+                    self._save_full_map_json(self._map_selector.value)
+
+            if self._btn_incr_cell_size and self._btn_incr_cell_size.is_clicked(pos, event):
+                if self.CELL_SIZE < self.MAX_CELL_SIZE:
+                    self.CELL_SIZE += 1
+                    self._save_full_map_json(self._map_selector.value)
+
+            if self._btn_decr_cell_size and self._btn_decr_cell_size.is_clicked(pos, event):
+                if self.CELL_SIZE > self.MIN_CELL_SIZE:
+                    self.CELL_SIZE -= 1
+                    self._save_full_map_json(self._map_selector.value)
+
             if self.map is not None:
                 base_x, base_y = self.grid_origin
                 base_x -= 100
-                x_rel = pos[0] - base_x - self.map_offset_x
-                y_rel = pos[1] - base_y - self.map_offset_y
+                x_rel = pos[0] - base_x
+                y_rel = pos[1] - base_y
 
                 cell_size = self.CELL_SIZE + self.MARGIN
                 i = y_rel // cell_size
@@ -126,8 +182,7 @@ class MapEditorPage(Page):
 
                 if 0 <= i < self.map.shape[0] and 0 <= j < self.map.shape[1]:
                     self.map[i, j] = 0 if self.map[i, j] == 1 else 1
-                    self._save_map_to_json(i, j, self.map[i, j])
-
+                    self._save_full_map_json(self._map_selector.value)
 
         if self._btn_back:
             self._btn_back.hover_property(event)
@@ -145,13 +200,13 @@ class MapEditorPage(Page):
         base_x -= 100
         # Draw background image
         if self.background_image is not None:
-            screen.blit(self.background_image, (base_x, base_y))
+            screen.blit(self.background_image, (base_x+self.map_offset_x, base_y+self.map_offset_y))
 
         # Draw overlay grid
         if self.map is not None:
             overlay = pygame.Surface((self.grid_width, self.grid_height), pygame.SRCALPHA)
-            for x in range(self.map.shape[0]):
-                for y in range(self.map.shape[1]):
+            for x in range(self.nbr_row-1):
+                for y in range(self.nbr_col-1):
                     if self.map[x, y] == 1:
                         color = (*self.utils.BLACK, 128)
                     else:
@@ -160,8 +215,8 @@ class MapEditorPage(Page):
                         overlay,
                         color,
                         [
-                            (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN + self.map_offset_x,
-                            (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN + self.map_offset_y,
+                            (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
+                            (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
                             self.CELL_SIZE,
                             self.CELL_SIZE,
                         ],
@@ -190,6 +245,23 @@ class MapEditorPage(Page):
         if self._btn_up:
             self._btn_up.draw(screen)
 
+        if self._btn_add_row:
+            self._btn_add_row.draw(screen)
+
+        if self._btn_del_row:
+            self._btn_del_row.draw(screen)
+
+        if self._btn_add_col:
+            self._btn_add_col.draw(screen)
+
+        if self._btn_del_col:
+            self._btn_del_col.draw(screen)
+
+        if self._btn_incr_cell_size:
+            self._btn_incr_cell_size.draw(screen)
+
+        if self._btn_decr_cell_size:
+            self._btn_decr_cell_size.draw(screen)
 
     # Helpers
     def _draw_label(self, screen: pygame.Surface, text: str, x: int, y: int) -> None:
@@ -201,53 +273,40 @@ class MapEditorPage(Page):
             loader = MapLoader()
             self.background_image = pygame.image.load(loader._resolve_path(name, "png")).convert_alpha()
             self.map = loader.load(name)
+
             
+        
             #Load offset from json
             json_path = loader._resolve_path(name, "json")
             with open(json_path, "r") as f:
                 data = json.load(f)
             self.map_offset_x = data.get("map_offset_x", 0)
             self.map_offset_y = data.get("map_offset_y", 0)
+            self.nbr_row = data.get("rows", 0)
+            self.nbr_col = data.get("cols", 0)
+            self.CELL_SIZE = data.get("cell_size",0)
+
         except Exception as e:
             print(f"Failed to load map preview for {name}: {e}")
             self._map_preview = None
 
-    def _save_map_offset(self, name: str, axis : str) -> None:
+    def _save_full_map_json(self, name: str) -> None:
+        """Rewrite the entire map JSON after structural changes."""
         try:
             loader = MapLoader()
             json_path = loader._resolve_path(name, "json")
-            with open(json_path, "r") as f:
-                data = json.load(f)
-            if axis == "x":
-                data["map_offset_x"] = self.map_offset_x
-            else :
-                data["map_offset_y"] = self.map_offset_y
 
-            with open(json_path, "w") as f:
-                json.dump(data, f, indent=4)
-        except Exception as e:
-            print(f"Failed to save map offset for {name}: {e}")
+            data = {
+                "map_offset_x": self.map_offset_x,
+                "map_offset_y": self.map_offset_y,
+                "rows": self.nbr_row,
+                "cols": self.nbr_col,
+                "cell_size": self.CELL_SIZE,
+                "grid": self.map.astype(int).tolist()
+            }
 
-    def _save_map_to_json(self, i: int, j: int, value: int) -> None:
-        """Save a single cell to the map JSON."""
-        try:
-            loader = MapLoader()
-            json_path = loader._resolve_path(self._map_selector.value, "json")
-
-            # Load existing JSON
-            with open(json_path, "r", encoding="utf-8") as f:
-                data = json.load(f)
-
-            # Ensure 'map' exists and is a list of lists
-            if "grid" not in data or not isinstance(data["grid"], list):
-                data["grid"] = self.map.astype(int).tolist()
-            else:
-                # Convert individual value to int
-                data["grid"][i][j] = int(value)
-
-            # Write back to JSON
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(data, f, indent=4)
 
         except Exception as e:
-            print(f"Failed to save cell ({i}, {j}) for map {self._map_selector.value}: {e}")
+            print(f"Failed to save full map JSON for {name}: {e}")
