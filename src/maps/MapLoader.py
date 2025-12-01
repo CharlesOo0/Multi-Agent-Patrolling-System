@@ -68,11 +68,10 @@ class MapLoader:
         offset_y = data.get("map_offset_y")
         nbr_rows = data.get("rows")
         nbr_cols = data.get("cols")
-        cell_size = data.get("cell_size")
-        if offset_x == None or offset_y == None or nbr_rows == None or nbr_cols == None or cell_size == None:
+        if offset_x == None or offset_y == None or nbr_rows == None or nbr_cols == None:
             raise ValueError("Invalid JSON")
 
-        return offset_x,offset_y,nbr_rows,nbr_cols,cell_size
+        return offset_x,offset_y,nbr_rows,nbr_cols
 
     def load_png(self, filename_or_name: Union[str, Path]) -> Path:
         """Return the path of the background of the map.

@@ -10,7 +10,7 @@ import colorsys
 import numpy as np
 
 class Visualization:
-    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int, cell_size : int) -> None:
+    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int) -> None:
         """Initialize the visualization window and layout for the grid.
 
         Args:
@@ -20,7 +20,6 @@ class Visualization:
         pygame.init()
 
         # Map and grid parameters
-        self.CELL_SIZE: int = cell_size
         self.MARGIN: int = 1
         self.map: np.ndarray = map
         self.background_image: pygame.Surface = pygame.image.load(map_png).convert_alpha()
@@ -35,9 +34,11 @@ class Visualization:
 
         self.rows, self.cols = nbr_rows,nbr_cols
         # Dimensions of the grid in pixels
-        self.grid_width: int = self.cols * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
-        self.grid_height: int = self.rows * (self.CELL_SIZE + self.MARGIN) + self.MARGIN #TODO Definir la cell size en fonction de la tailel de la grid. On fiat changer le png de taille
+        self.grid_width: int = 630
+        self.grid_height: int = 630
         
+        self.CELL_SIZE : int = self.grid_width/(self.rows+self.MARGIN)
+
         #Offset        
         self.map_offset_x = offset_x
         self.map_offset_y = offset_y
@@ -80,8 +81,8 @@ class Visualization:
         content_h = win_h - 3 * self.PADDING - self.BOTTOM_BAR_H
 
         # Center grid within left content area
-        grid_x = self.PADDING + max(0, (content_w - self.grid_width) // 2)
-        grid_y = self.PADDING + max(0, (content_h - self.grid_height) // 2)
+        grid_x = self.PADDING + max(0, (content_w - self.grid_width) // 2)+10
+        grid_y = self.PADDING + max(0, (content_h - self.grid_height) // 2)+25
         self.grid_origin: tuple[int, int] = (grid_x, grid_y)
 
         # Bottom bar spans full width (minus side paddings)
@@ -131,11 +132,10 @@ class Visualization:
         #Print map png behind the grid
         self.screen.blit(self.background_image, (base_x + self.map_offset_x, base_y + self.map_offset_y))
 
-        overlay = pygame.Surface(self.background_image.get_size(), pygame.SRCALPHA)
+        overlay = pygame.Surface((self.grid_width,self.grid_height), pygame.SRCALPHA)
 
         for x in range(self.rows-1):
             for y in range(self.cols-1):
-                
 
                 if self.map[x, y] == 1:  # Obstacle
                     color = (*self.utils.BLACK, 150)
@@ -160,7 +160,7 @@ class Visualization:
                                 break
 
                     color = fill_color
-
+                
                 pygame.draw.rect(
                     overlay,
                     color,
