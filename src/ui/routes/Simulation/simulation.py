@@ -60,7 +60,7 @@ class SimPage(Page):
                 "coverage_by_agent": list(
                     getattr(self.algorithm, "coverage_by_agent", [])
                 ),
-                "agent_work_history": list(
+                "agentswork_history": list(
                     getattr(self.algorithm, "agentswork_history", [])
                 ),
                 "coverage_by_agent_history": list(

@@ -43,6 +43,7 @@ class Algorithm(ABC):
         self.step_count = 0
         self.total_coverage_history: List[float] = []
         self.visited_cells = set()
+        self.visited_by_agent: List[List[float]] = [[] for _ in range(self.num_agents)]
         self.coverage_by_agent_history: List[List[float]] = [
             [] for _ in range(self.num_agents)
         ]
@@ -89,31 +90,27 @@ class Algorithm(ABC):
 
         # Convert visited set to a list for deterministic enumeration and assign
         # visited cells to agents in a round-robin fashion to compute per-agent metrics.
-        visited_list = list(self.visited_cells)
 
         for i in range(self.num_agents):
-            agent_visited = {
-                pos
-                for idx, pos in enumerate(visited_list)
-                if idx % self.num_agents == i
-            }
+            if self.agents[i] not in self.visited_by_agent[i]:
+                self.visited_by_agent[i].append(self.agents[i])
             coverage = (
-                len(agent_visited) / total_free_cells if total_free_cells > 0 else 0.0
+                len(self.visited_by_agent[i]) / total_free_cells
+                if total_free_cells > 0
+                else 0.0
             )
             self.coverage_by_agent_history[i].append(coverage)
+            print(f"Agent {i} coverage: {coverage:.3f}")
 
         for i in range(self.num_agents):
             # Sum idleness of the visited cells assigned to this agent this step
-            current_sum = sum(
-                float(self.idleness[pos])
-                for idx, pos in enumerate(visited_list)
-                if idx % self.num_agents == i
-            )
+
+            current_idl = float(self.idleness[self.agents[i]])
             # Accumulate on top of the previous cumulative value (or start at 0.0)
             prev_cumulative = (
                 self.agentswork_history[i][-1] if self.agentswork_history[i] else 0.0
             )
-            self.agentswork_history[i].append(prev_cumulative + current_sum)
+            self.agentswork_history[i].append(prev_cumulative + current_idl)
 
         average_idleness = np.mean(
             self.idleness[self.map == 0]
@@ -128,25 +125,27 @@ class Algorithm(ABC):
         coverage_last = [
             hist[-1] if hist else None for hist in self.coverage_by_agent_history
         ]
-        print(
-            f"Step {self.step_count}:, Avg Idleness={average_idleness:.3f}, Max Idleness={maximum_idleness:.3f}, coverage_by_agent={coverage_last}"
-        )
+        # print(
+        #     f"Step {self.step_count}:, Avg Idleness={average_idleness:.3f}, Max Idleness={maximum_idleness:.3f}, coverage_by_agent={coverage_last}"
+        # )
         # Print last value of each agent's work history (None if empty)
         last_values = [hist[-1] if hist else None for hist in self.agentswork_history]
-        print(f"Agents' last work values: {last_values}")
+        # print(f"Agents' last work values: {last_values}")
 
     def _check_position_within_bounds(self, position: Tuple[int, int]) -> bool:
         """Check if a position is within the map bounds."""
         x, y = position
         return 0 <= x < self.width and 0 <= y < self.height
-    
-    def _pick_random_valid_neighbor(self, agent_index: int, occupied: set = None) -> Tuple[int, int]:
+
+    def _pick_random_valid_neighbor(
+        self, agent_index: int, occupied: set = None
+    ) -> Tuple[int, int]:
         """Pick a random valid neighboring cell for an agent, avoiding 'occupied' cells if provided.
-        
+
         Args:
             agent_index: Index of the agent for which to pick a neighbor.
             occupied: Optional set of positions to avoid (e.g., other agents' targets).
-        
+
         Returns:
             A valid neighboring position (x, y) or the agent's current position if none found.
         """
@@ -164,18 +163,24 @@ class Algorithm(ABC):
         while neighbors:
             random_pos = random.choice(neighbors)
             neighbors.remove(random_pos)
-            if self.map[random_pos] == 0 and random_pos not in self.agents and random_pos not in occupied:
+            if (
+                self.map[random_pos] == 0
+                and random_pos not in self.agents
+                and random_pos not in occupied
+            ):
                 return random_pos
 
         return self.agents[agent_index]  # No valid move, stay in place
 
-    def _resolve_conflict(self, new_positions: list[Tuple[int, int]]) -> list[Tuple[int, int]]:
+    def _resolve_conflict(
+        self, new_positions: list[Tuple[int, int]]
+    ) -> list[Tuple[int, int]]:
         """
         Resolve conflicts where :
             - Multiple agents attempt to occupy the same cell.
             - An agent attempts to move into an obstacle or out of bounds.
             - Or any other invalid move.
-        
+
         Args:
             new_positions: Proposed new positions for each agent.
 
@@ -202,7 +207,7 @@ class Algorithm(ABC):
                 final_positions.append(chosen)
                 occupied.add(chosen)
         return final_positions
-    
+
     def _reset_idleness_at_positions(self, positions: list[Tuple[int, int]]) -> None:
         """Reset idleness values at the specified positions to zero."""
         for pos in positions:
@@ -224,11 +229,12 @@ class Algorithm(ABC):
 
         # Apply events effects
         self._run_event_step()
-        # Update statistics
-        self._update_statistics()
 
         # Update agent positions
         self.agents = self._resolve_conflict(new_positions)
+        # Update statistics
+        self._update_statistics()
+        # Reset idleness at agents' new positions
         self._reset_idleness_at_positions(self.agents)
 
         return self.agents
