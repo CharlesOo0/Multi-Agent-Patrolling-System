@@ -10,7 +10,7 @@ import colorsys
 import numpy as np
 
 class Visualization:
-    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int,map_scale:float) -> None:
+    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int,map_scale:float,on_back: Callable[[], None] = None) -> None:
         """Initialize the visualization window and layout for the grid.
 
         Args:
@@ -79,6 +79,7 @@ class Visualization:
         self.speed_inc_button: Button | None = None
         # Callback appelé quand l'utilisateur termine la simulation via le bouton
         self.on_finish = None
+        self.on_back = on_back
 
 
     def _recompute_layout(self, win_w: int, win_h: int) -> None:
@@ -286,6 +287,9 @@ class Visualization:
         GAP: int = 10
         SMALL_W: int = 48
 
+        #Accueil button (top left)        
+        self._back_btn = Button(20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._back_btn.draw(self.screen)
         # Finish button (right)
         qx = self.bottom_bar_rect.right - BUTTON_WIDTH - GAP
         by = self.bottom_bar_rect.centery - BUTTON_HEIGHT // 2
@@ -385,7 +389,7 @@ class Visualization:
             return
 
         # Hover cursor for all buttons
-        for btn in (self.reset_button, self.quit_button, self.speed_dec_button, self.speed_inc_button):
+        for btn in (self.reset_button, self.quit_button, self.speed_dec_button, self.speed_inc_button,self._back_btn):
             if btn:
                 btn.hover_property(event)
 
@@ -405,6 +409,8 @@ class Visualization:
                 self._adjust_speed(-1.0, algorithm)
             if self.speed_inc_button and self.speed_inc_button.is_clicked(mouse_pos, event):
                 self._adjust_speed(+1.0, algorithm)
+            if self._back_btn and self._back_btn.is_clicked(mouse_pos,event):
+                self.on_exit()
 
     def reset_simulation(self, algorithm: Algorithm) -> None:
         """Reset algorithm state, timer, and clear logs."""
@@ -425,3 +431,6 @@ class Visualization:
         new_speed = round(new_speed * 2) / 2.0
         self.speed_multiplier = new_speed
         
+    def on_exit(self) -> None:
+        if callable(self.on_back):
+            self.on_back()
