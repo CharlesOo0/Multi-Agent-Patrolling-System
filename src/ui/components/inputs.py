@@ -139,15 +139,39 @@ class TextInput:
         self.color_active = (50, 50, 50)
 
     def handle_event(self, event):
+        # Click to focus
         if event.type == pygame.MOUSEBUTTONDOWN:
             self.active = self.rect.collidepoint(event.pos)
 
+        # Keyboard input when active
         if self.active and event.type == pygame.KEYDOWN:
+            # Paste via Ctrl+V
+            try:
+                ctrl_pressed = bool(event.mod & pygame.KMOD_CTRL)
+            except Exception:
+                ctrl_pressed = False
+
+            if ctrl_pressed and event.key == pygame.K_v:
+                # Use tkinter clipboard as it's reliable across platforms
+                try:
+                    import tkinter as _tk
+                    _root = _tk.Tk()
+                    _root.withdraw()
+                    clip = _root.clipboard_get()
+                    _root.destroy()
+                    if isinstance(clip, str):
+                        self.text += clip
+                except Exception:
+                    # ignore clipboard failures
+                    pass
+                return
+
             if event.key == pygame.K_BACKSPACE:
                 self.text = self.text[:-1]
             elif event.key == pygame.K_RETURN:
                 pass
             else:
+                # Append unicode char (supports accents, etc.)
                 self.text += event.unicode
 
     def draw(self, screen):

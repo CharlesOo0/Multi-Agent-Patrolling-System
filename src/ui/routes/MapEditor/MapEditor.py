@@ -60,6 +60,7 @@ class MapEditorPage(Page):
         self.input_png_path = None
         self.btn_popup_create = None
         self.btn_popup_cancel = None
+        self._popup_error: str | None = None
 
         #Delete Map Pop Up
         self.show_delete_popup = False
@@ -155,16 +156,36 @@ class MapEditorPage(Page):
             if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
                 pos = pygame.mouse.get_pos()
 
+                # Browse for PNG file
+                if hasattr(self, 'btn_popup_browse') and self.btn_popup_browse.is_clicked(pos, event):
+                    try:
+                        import tkinter as _tk
+                        from tkinter import filedialog as _fd
+                        _root = _tk.Tk()
+                        _root.withdraw()
+                        file_path = _fd.askopenfilename(filetypes=[("PNG files", "*.png"), ("All files", "*.*")])
+                        _root.destroy()
+                        if file_path:
+                            self.input_png_path.text = file_path
+                    except Exception as e:
+                        print(f"File dialog failed: {e}")
+                    return
+
                 if self.btn_popup_cancel.is_clicked(pos, event):
                     self.show_create_popup = False
                     return
 
                 if self.btn_popup_create.is_clicked(pos, event):
-                    self._create_new_map(
-                        self.input_map_name.text.strip(),
-                        self.input_png_path.text.strip()
-                    )
-                    self.show_create_popup = False
+                    name = self.input_map_name.text.strip()
+                    png = self.input_png_path.text.strip()
+                    ok, msg = self._validate_and_create(name, png)
+                    if ok:
+                        # success: close popup
+                        self.show_create_popup = False
+                        self._popup_error = None
+                    else:
+                        # show error in popup
+                        self._popup_error = msg
                     return
 
             return  # prevent clicks behind popup
@@ -388,34 +409,109 @@ class MapEditorPage(Page):
 
     def _open_create_popup(self):
         self.show_create_popup = True
-        self.input_map_name = TextInput(600, 300, 300, 40, self.small)
-        self.input_png_path = TextInput(600, 380, 300, 40, self.small)
-        self.btn_popup_create = Button(600, 460, 140, 44, "Create", self.utils.GRAY, self.utils.LIGHT_GRAY)
-        self.btn_popup_cancel = Button(760, 460, 140, 44, "Cancel", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        # Popup layout: compute centered position using current screen size
+        if self.screen is not None:
+            sw, sh = self.screen.get_size()
+        else:
+            sw, sh = (1280, 720)
+
+        popup_w = 600
+        popup_h = 320
+        popup_x = (sw - popup_w) // 2
+        popup_y = (sh - popup_h) // 2
+
+        # store popup rect for use in drawing
+        self._popup_rect = pygame.Rect(popup_x, popup_y, popup_w, popup_h)
+
+        # input positions inside popup
+        input_x = popup_x + 80
+        input_w = popup_w - 200
+        self.input_map_name = TextInput(input_x, popup_y + 60, input_w, 40, self.small)
+        self.input_png_path = TextInput(input_x, popup_y + 140, input_w, 40, self.small)
+
+        # Buttons positions
+        btn_y = popup_y + 220
+        self.btn_popup_create = Button(input_x, btn_y, 160, 44, "Create", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self.btn_popup_cancel = Button(input_x + 180, btn_y, 160, 44, "Cancel", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        # Browse button to pick a PNG from the filesystem (placed next to png input)
+        self.btn_popup_browse = Button(input_x + input_w + 10, popup_y + 140, 80, 40, "Browse", self.utils.GRAY, self.utils.LIGHT_GRAY)
 
     def _draw_create_popup(self, screen):
         # Dark background overlay
         s = pygame.Surface(screen.get_size(), pygame.SRCALPHA)
         s.fill((0,0,0,180))
         screen.blit(s, (0,0))
+        # Popup box (use rect stored in _open_create_popup or compute centered fallback)
+        if hasattr(self, '_popup_rect') and isinstance(self._popup_rect, pygame.Rect):
+            rect = self._popup_rect
+        else:
+            sw, sh = screen.get_size()
+            popup_w = 600
+            popup_h = 320
+            rect = pygame.Rect((sw - popup_w) // 2, (sh - popup_h) // 2, popup_w, popup_h)
 
-        # Popup box
-        pygame.draw.rect(screen, (245,245,245), (550,250,420,300), border_radius=10)
-        pygame.draw.rect(screen, (50,50,50), (550,250,420,300), 3, border_radius=10)
+        pygame.draw.rect(screen, (245,245,245), rect, border_radius=10)
+        pygame.draw.rect(screen, (50,50,50), rect, 3, border_radius=10)
 
         title = self.font.render("Create New Map", True, (0,0,0))
-        screen.blit(title, (610,260))
+        screen.blit(title, (rect.x + 40, rect.y + 10))
 
         lbl1 = self.small.render("Map name :", True, (0,0,0))
         lbl2 = self.small.render("PNG path :", True, (0,0,0))
-        screen.blit(lbl1, (560,310))
-        screen.blit(lbl2, (560,390))
+        screen.blit(lbl1, (rect.x + 40, rect.y + 70))
+        screen.blit(lbl2, (rect.x + 40, rect.y + 150))
 
-        self.input_map_name.draw(screen)
-        self.input_png_path.draw(screen)
+        # Draw inputs and buttons (positions set in _open_create_popup)
+        if self.input_map_name:
+            self.input_map_name.draw(screen)
+        if self.input_png_path:
+            self.input_png_path.draw(screen)
 
-        self.btn_popup_create.draw(screen)
-        self.btn_popup_cancel.draw(screen)
+        # Draw browse button next to PNG path input
+        if hasattr(self, 'btn_popup_browse') and self.btn_popup_browse:
+            self.btn_popup_browse.draw(screen)
+
+        if self.btn_popup_create:
+            self.btn_popup_create.draw(screen)
+        if self.btn_popup_cancel:
+            self.btn_popup_cancel.draw(screen)
+        # Draw error message if present
+        if getattr(self, '_popup_error', None):
+            err = self._popup_error
+            err_surf = self.small.render(err, True, (200, 30, 30))
+            screen.blit(err_surf, (rect.x + 40, rect.y + rect.height - 40))
+
+    def _validate_and_create(self, name: str, png_path: str) -> tuple[bool, str | None]:
+        """Validate inputs and create the map. Returns (ok, message).
+        On success returns (True, None). On failure returns (False, error_message).
+        """
+        import os
+        if not name:
+            return False, "Map name is required"
+
+        # Prevent duplicate names (case-insensitive)
+        existing = [n.lower() for n in self._map_names]
+        if name.lower() in existing:
+            return False, "Map name already picked"
+
+        if not png_path:
+            return False, "PNG path is required"
+
+        if not os.path.exists(png_path) or not os.path.isfile(png_path):
+            return False, "Wrong path for png"
+
+        # Try loading with pygame to ensure it's a valid image
+        try:
+            _img = pygame.image.load(png_path)
+        except Exception:
+            return False, "Wrong path for png"
+
+        # All checks passed, create map and report success/failure
+        ok = self._create_new_map(name, png_path)
+        if ok:
+            return True, None
+        else:
+            return False, "Failed to create map (io error)"
 
     def _create_new_map(self, map_name: str, png_path: str):
         loader = MapLoader()
@@ -431,7 +527,7 @@ class MapEditorPage(Page):
             pygame.image.save(img, target_png)
         except Exception as e:
             print(f"Failed to copy/resize PNG: {e}")
-            return
+            return False
 
         # Create default map grid (10x10 empty)
         default_grid = [[1 for _ in range(10)] for _ in range(10)]
@@ -451,7 +547,7 @@ class MapEditorPage(Page):
                 json.dump(data, f, indent=4)
         except Exception as e:
             print(f"Failed to write JSON: {e}")
-            return
+            return False
 
         # Refresh selector
         self._map_names.append(map_name)
@@ -460,6 +556,8 @@ class MapEditorPage(Page):
         self._map_selector.options = self._map_names
         self._map_selector.index = self._map_names.index(map_name)
         self._map_selector._notify()
+
+        return True
 
     def _open_delete_popup(self):
         self.show_delete_popup = True
