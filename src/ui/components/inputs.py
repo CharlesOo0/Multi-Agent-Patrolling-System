@@ -128,3 +128,30 @@ class CycleSelector:
         tx = self.rect.centerx - text.get_width() // 2
         ty = self.rect.centery - text.get_height() // 2
         surface.blit(text, (tx, ty))
+
+class TextInput:
+    def __init__(self, x, y, w, h, font, text=""):
+        self.rect = pygame.Rect(x, y, w, h)
+        self.font = font
+        self.text = text
+        self.active = False
+        self.color_inactive = (180, 180, 180)
+        self.color_active = (50, 50, 50)
+
+    def handle_event(self, event):
+        if event.type == pygame.MOUSEBUTTONDOWN:
+            self.active = self.rect.collidepoint(event.pos)
+
+        if self.active and event.type == pygame.KEYDOWN:
+            if event.key == pygame.K_BACKSPACE:
+                self.text = self.text[:-1]
+            elif event.key == pygame.K_RETURN:
+                pass
+            else:
+                self.text += event.unicode
+
+    def draw(self, screen):
+        pygame.draw.rect(screen, (230,230,230), self.rect)
+        pygame.draw.rect(screen, self.color_active if self.active else self.color_inactive, self.rect, 2)
+        txt = self.font.render(self.text, True, (0,0,0))
+        screen.blit(txt, (self.rect.x+5, self.rect.y+5))
