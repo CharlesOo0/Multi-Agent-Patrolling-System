@@ -77,6 +77,7 @@ class Visualization:
         self.reset_button: Button | None = None
         self.speed_dec_button: Button | None = None
         self.speed_inc_button: Button | None = None
+        self._back_btn: Button | None = None
         # Callback appelé quand l'utilisateur termine la simulation via le bouton
         self.on_finish = None
         self.on_back = on_back

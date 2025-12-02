@@ -60,6 +60,7 @@ class MapEditorPage(Page):
         self.input_png_path = None
         self.btn_popup_create = None
         self.btn_popup_cancel = None
+        self._popup_error: str | None = None
 
         #Delete Map Pop Up
         self.show_delete_popup = False
@@ -175,11 +176,16 @@ class MapEditorPage(Page):
                     return
 
                 if self.btn_popup_create.is_clicked(pos, event):
-                    self._create_new_map(
-                        self.input_map_name.text.strip(),
-                        self.input_png_path.text.strip()
-                    )
-                    self.show_create_popup = False
+                    name = self.input_map_name.text.strip()
+                    png = self.input_png_path.text.strip()
+                    ok, msg = self._validate_and_create(name, png)
+                    if ok:
+                        # success: close popup
+                        self.show_create_popup = False
+                        self._popup_error = None
+                    else:
+                        # show error in popup
+                        self._popup_error = msg
                     return
 
             return  # prevent clicks behind popup
@@ -469,6 +475,43 @@ class MapEditorPage(Page):
             self.btn_popup_create.draw(screen)
         if self.btn_popup_cancel:
             self.btn_popup_cancel.draw(screen)
+        # Draw error message if present
+        if getattr(self, '_popup_error', None):
+            err = self._popup_error
+            err_surf = self.small.render(err, True, (200, 30, 30))
+            screen.blit(err_surf, (rect.x + 40, rect.y + rect.height - 40))
+
+    def _validate_and_create(self, name: str, png_path: str) -> tuple[bool, str | None]:
+        """Validate inputs and create the map. Returns (ok, message).
+        On success returns (True, None). On failure returns (False, error_message).
+        """
+        import os
+        if not name:
+            return False, "Map name is required"
+
+        # Prevent duplicate names (case-insensitive)
+        existing = [n.lower() for n in self._map_names]
+        if name.lower() in existing:
+            return False, "Map name already picked"
+
+        if not png_path:
+            return False, "PNG path is required"
+
+        if not os.path.exists(png_path) or not os.path.isfile(png_path):
+            return False, "Wrong path for png"
+
+        # Try loading with pygame to ensure it's a valid image
+        try:
+            _img = pygame.image.load(png_path)
+        except Exception:
+            return False, "Wrong path for png"
+
+        # All checks passed, create map and report success/failure
+        ok = self._create_new_map(name, png_path)
+        if ok:
+            return True, None
+        else:
+            return False, "Failed to create map (io error)"
 
     def _create_new_map(self, map_name: str, png_path: str):
         loader = MapLoader()
@@ -484,7 +527,7 @@ class MapEditorPage(Page):
             pygame.image.save(img, target_png)
         except Exception as e:
             print(f"Failed to copy/resize PNG: {e}")
-            return
+            return False
 
         # Create default map grid (10x10 empty)
         default_grid = [[1 for _ in range(10)] for _ in range(10)]
@@ -504,7 +547,7 @@ class MapEditorPage(Page):
                 json.dump(data, f, indent=4)
         except Exception as e:
             print(f"Failed to write JSON: {e}")
-            return
+            return False
 
         # Refresh selector
         self._map_names.append(map_name)
@@ -513,6 +556,8 @@ class MapEditorPage(Page):
         self._map_selector.options = self._map_names
         self._map_selector.index = self._map_names.index(map_name)
         self._map_selector._notify()
+
+        return True
 
     def _open_delete_popup(self):
         self.show_delete_popup = True
