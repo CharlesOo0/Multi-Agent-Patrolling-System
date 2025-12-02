@@ -9,7 +9,7 @@ import numpy as np
 from ui.components.utils import viz_utils
 from ui.routes.Simulation.visualization import Visualization
 from maps.MapLoader import MapLoader
-from algorithm import Heuristic, AntColony  # default; user can extend later
+from algorithm import Heuristic, AntColony, AntColonyLecture  # default; user can extend later
 from ui.config import sim_config
 
 from ui.routes.base import Page
@@ -90,6 +90,18 @@ class SimPage(Page):
                 evaporation_rate=float(p.get("evaporation_rate", 0.1)),
                 alpha=float(p.get("alpha", 1.0)),
                 beta=float(p.get("beta", 2.0)),
+                event_spawn_prob=spawn_prob,
+                iddleness_growth=float(sim_config.iddleness_growth),
+            )
+        elif algo_name == "AntColonyLecture":
+            p = sim_config.algo_params.get("AntColonyLecture", {})
+            self.algorithm = AntColonyLecture(
+                MAP,
+                num_agents,
+                alpha=float(p.get("alpha", 1.0)),
+                beta=float(p.get("beta", 2.0)),
+                rho=float(p.get("evaporation_rate", 0.1)),  # maps old "evaporation_rate" → rho
+                Q=float(p.get("Q", 1.0)),                   # new ACO parameter
                 event_spawn_prob=spawn_prob,
                 iddleness_growth=float(sim_config.iddleness_growth),
             )
