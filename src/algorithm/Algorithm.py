@@ -136,10 +136,12 @@ class Algorithm(ABC):
         """Check if a position is within the map bounds."""
         x, y = position
         return 0 <= x < self.width and 0 <= y < self.height
+    
+    def in_bounds(self, x, y):
+        return 0 <= x < self.width and 0 <= y < self.height
 
-    def _pick_random_valid_neighbor(
-        self, agent_index: int, occupied: set = None
-    ) -> Tuple[int, int]:
+    
+    def _pick_random_valid_neighbor(self, agent_index: int, occupied: set = None) -> Tuple[int, int]:
         """Pick a random valid neighboring cell for an agent, avoiding 'occupied' cells if provided.
 
         Args:

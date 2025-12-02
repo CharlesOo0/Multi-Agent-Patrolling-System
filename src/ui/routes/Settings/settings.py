@@ -61,7 +61,7 @@ class SettingsPage(Page):
         # Algorithm selector
         self._algo_selector = CycleSelector(
             x0 + 220, y0, ctrl_w, ctrl_h,
-            options=["Heuristic", "AntColony"],
+            options=["Heuristic", "AntColony", "AntColonyLecture"],
             value=sim_config.algorithm,
             on_change=self._on_algo_change,
         )
@@ -95,8 +95,9 @@ class SettingsPage(Page):
             on_change=self._set_iddleness_growth,
         )
 
-        # ACO specific controls
+        # ACO specific controls for AntColony and AntColonyLecture
         aco = sim_config.algo_params.get("AntColony", {})
+        aco = sim_config.algo_params.get("AntColonyLecture", {}) if not aco else aco
         self._aco_evap = Stepper(
             x0 + 220, y0 + 5 * row_h, ctrl_w, ctrl_h,
             value=float(aco.get("evaporation_rate", 0.1)), step=0.01, min_value=0.0, max_value=1.0, fmt="{:.2f}",
@@ -191,7 +192,7 @@ class SettingsPage(Page):
         screen.blit(surf, (x, y + 8))
 
     def _is_aco(self) -> bool:
-        return sim_config.algorithm == "AntColony"
+        return sim_config.algorithm == "AntColony" or sim_config.algorithm == "AntColonyLecture"
 
     # Callbacks
     def _on_algo_change(self, name: str) -> None:

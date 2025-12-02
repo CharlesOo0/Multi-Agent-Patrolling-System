@@ -10,7 +10,7 @@ import colorsys
 import numpy as np
 
 class Visualization:
-    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int) -> None:
+    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int,map_scale:float,on_back: Callable[[], None] = None) -> None:
         """Initialize the visualization window and layout for the grid.
 
         Args:
@@ -20,10 +20,16 @@ class Visualization:
         pygame.init()
 
         # Map and grid parameters
-        self.CELL_SIZE: int = 20
         self.MARGIN: int = 1
         self.map: np.ndarray = map
+        self.map_scale = map_scale
+
+        #Resize of Background Image
         self.background_image: pygame.Surface = pygame.image.load(map_png).convert_alpha()
+        w, h = self.background_image.get_size()
+        new_w = int(w * self.map_scale)
+        new_h = int(h * self.map_scale)
+        self.background_image = pygame.transform.smoothscale(self.background_image, (new_w, new_h))
 
         # Colors and utils
         self.utils: viz_utils = viz_utils()
@@ -33,11 +39,13 @@ class Visualization:
         self.BOTTOM_BAR_H: int = 60
         self.LOG_PANEL_W: int = 325
 
-        rows, cols = self.map.shape
+        self.rows, self.cols = nbr_rows,nbr_cols
         # Dimensions of the grid in pixels
-        self.grid_width: int = cols * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
-        self.grid_height: int = rows * (self.CELL_SIZE + self.MARGIN) + self.MARGIN
+        self.grid_width: int = 630
+        self.grid_height: int = 630
         
+        self.CELL_SIZE : int = self.grid_width/(self.rows+self.MARGIN)
+
         #Offset        
         self.map_offset_x = offset_x
         self.map_offset_y = offset_y
@@ -69,8 +77,10 @@ class Visualization:
         self.reset_button: Button | None = None
         self.speed_dec_button: Button | None = None
         self.speed_inc_button: Button | None = None
+        self._back_btn: Button | None = None
         # Callback appelé quand l'utilisateur termine la simulation via le bouton
         self.on_finish = None
+        self.on_back = on_back
 
 
     def _recompute_layout(self, win_w: int, win_h: int) -> None:
@@ -80,8 +90,8 @@ class Visualization:
         content_h = win_h - 3 * self.PADDING - self.BOTTOM_BAR_H
 
         # Center grid within left content area
-        grid_x = self.PADDING + max(0, (content_w - self.grid_width) // 2)
-        grid_y = self.PADDING + max(0, (content_h - self.grid_height) // 2)
+        grid_x = self.PADDING + max(0, (content_w - self.grid_width) // 2)+10
+        grid_y = self.PADDING + max(0, (content_h - self.grid_height) // 2)+25
         self.grid_origin: tuple[int, int] = (grid_x, grid_y)
 
         # Bottom bar spans full width (minus side paddings)
@@ -129,13 +139,12 @@ class Visualization:
         base_y = self.grid_origin[1]
 
         #Print map png behind the grid
-        self.screen.blit(self.background_image, (base_x, base_y))
+        self.screen.blit(self.background_image, (base_x + self.map_offset_x, base_y + self.map_offset_y))
 
-        overlay = pygame.Surface(self.background_image.get_size(), pygame.SRCALPHA)
+        overlay = pygame.Surface((self.grid_width,self.grid_height), pygame.SRCALPHA)
 
-        for x in range(self.map.shape[0]):
-            for y in range(self.map.shape[1]):
-                
+        for x in range(self.rows-1):
+            for y in range(self.cols-1):
 
                 if self.map[x, y] == 1:  # Obstacle
                     color = (*self.utils.BLACK, 150)
@@ -160,13 +169,13 @@ class Visualization:
                                 break
 
                     color = fill_color
-
+                
                 pygame.draw.rect(
                     overlay,
                     color,
                     [
-                        (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN + self.map_offset_x,
-                        (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN + self.map_offset_y,
+                        (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
+                        (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
                         self.CELL_SIZE,
                         self.CELL_SIZE,
                     ],
@@ -178,8 +187,8 @@ class Visualization:
                         overlay,
                         border_color,
                         [
-                            (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN + self.map_offset_x,
-                            (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN + self.map_offset_y,
+                            (self.MARGIN + self.CELL_SIZE) * y + self.MARGIN,
+                            (self.MARGIN + self.CELL_SIZE) * x + self.MARGIN,
                             self.CELL_SIZE,
                             self.CELL_SIZE,
                         ],
@@ -279,6 +288,9 @@ class Visualization:
         GAP: int = 10
         SMALL_W: int = 48
 
+        #Accueil button (top left)        
+        self._back_btn = Button(20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._back_btn.draw(self.screen)
         # Finish button (right)
         qx = self.bottom_bar_rect.right - BUTTON_WIDTH - GAP
         by = self.bottom_bar_rect.centery - BUTTON_HEIGHT // 2
@@ -378,7 +390,7 @@ class Visualization:
             return
 
         # Hover cursor for all buttons
-        for btn in (self.reset_button, self.quit_button, self.speed_dec_button, self.speed_inc_button):
+        for btn in (self.reset_button, self.quit_button, self.speed_dec_button, self.speed_inc_button,self._back_btn):
             if btn:
                 btn.hover_property(event)
 
@@ -398,6 +410,8 @@ class Visualization:
                 self._adjust_speed(-1.0, algorithm)
             if self.speed_inc_button and self.speed_inc_button.is_clicked(mouse_pos, event):
                 self._adjust_speed(+1.0, algorithm)
+            if self._back_btn and self._back_btn.is_clicked(mouse_pos,event):
+                self.on_exit()
 
     def reset_simulation(self, algorithm: Algorithm) -> None:
         """Reset algorithm state, timer, and clear logs."""
@@ -418,3 +432,6 @@ class Visualization:
         new_speed = round(new_speed * 2) / 2.0
         self.speed_multiplier = new_speed
         
+    def on_exit(self) -> None:
+        if callable(self.on_back):
+            self.on_back()

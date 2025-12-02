@@ -9,7 +9,7 @@ import numpy as np
 from ui.components.utils import viz_utils
 from ui.routes.Simulation.visualization import Visualization
 from maps.MapLoader import MapLoader
-from algorithm import Heuristic, AntColony  # default; user can extend later
+from algorithm import Heuristic, AntColony, AntColonyLecture  # default; user can extend later
 from ui.config import sim_config
 
 from ui.routes.base import Page
@@ -28,7 +28,6 @@ class SimPage(Page):
         self.go_stats = go_stats
         self.viz: Visualization | None = None
         self.algorithm = None
-        self._back_btn = None
         # Accumulateur de temps simulé pour déclencher les steps à 1 Hz simulé
         self._sim_accum: float = 0.0
 
@@ -37,12 +36,11 @@ class SimPage(Page):
         if screen is None:
             screen = pygame.display.set_mode((1280, 800), pygame.RESIZABLE)
         # Load default map
-        # Load default map
         loader = MapLoader()
         MAP = loader.load(sim_config.map_name)
         PNG_MAP = loader.load_png(sim_config.map_name)
-        offset_x,offset_y = loader.load_offset(sim_config.map_name)
-        self.viz = Visualization(screen.get_size(), MAP, PNG_MAP, offset_x,offset_y)
+        offset_x,offset_y,nbr_rows,nbr_cols,map_scale = loader.load_parameters(sim_config.map_name)
+        self.viz = Visualization(screen.get_size(), MAP, PNG_MAP, offset_x,offset_y,nbr_rows,nbr_cols,map_scale,self.go_home)
 
         # Perform any finalization when simulation ends
         def _finish():
@@ -95,15 +93,21 @@ class SimPage(Page):
                 event_spawn_prob=spawn_prob,
                 iddleness_growth=float(sim_config.iddleness_growth),
             )
+        elif algo_name == "AntColonyLecture":
+            p = sim_config.algo_params.get("AntColonyLecture", {})
+            self.algorithm = AntColonyLecture(
+                MAP,
+                num_agents,
+                alpha=float(p.get("alpha", 1.0)),
+                beta=float(p.get("beta", 2.0)),
+                rho=float(p.get("evaporation_rate", 0.1)),  # maps old "evaporation_rate" → rho
+                Q=float(p.get("Q", 1.0)),                   # new ACO parameter
+                event_spawn_prob=spawn_prob,
+                iddleness_growth=float(sim_config.iddleness_growth),
+            )
         else:
             self.algorithm = Heuristic(MAP, num_agents, event_spawn_prob=spawn_prob)
 
-        # Back button in bottom bar area (left corner)
-        from ui.components.button import Button
-
-        self._back_btn = Button(
-            20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY
-        )
         self._sim_accum = 0.0
 
     def on_exit(self, next: Optional[str] = None) -> None:
@@ -111,19 +115,11 @@ class SimPage(Page):
         # Here we just drop references; router controls the main window.
         self.viz = None
         self.algorithm = None
-        self._back_btn = None
 
     def handle_event(self, event: pygame.event.Event) -> None:
         if event.type == pygame.KEYDOWN and event.key == pygame.K_ESCAPE:
-            self.go_home()
+            self.go_home
             return
-        if self._back_btn:
-            self._back_btn.hover_property(event)
-            if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
-                pos = pygame.mouse.get_pos()
-                if self._back_btn.is_clicked(pos, event):
-                    self.go_home()
-                    return
         if self.viz and self.algorithm:
             # forward UI events to existing Visualization for speed/reset/quit etc.
             self.viz.buttons_event(event, self.algorithm)
@@ -147,6 +143,4 @@ class SimPage(Page):
         # Visualization renders onto its own screen surface; ensure same reference
         self.viz.screen = screen
         self.viz.update_visuals(self.algorithm)
-        # Draw a small back button overlay (top-left)
-        if self._back_btn:
-            self._back_btn.draw(screen)
+
