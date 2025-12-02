@@ -7,40 +7,43 @@ st.set_page_config(page_title="Stats", layout="wide", initial_sidebar_state="exp
 
 st.title("Simulation Stats")
 
-# Upload multiple files
-uploaded_files = st.file_uploader(
-    "Upload results JSON (multiple files for comparison)",
-    type=["json"],
-    accept_multiple_files=True,
-)
+left, right = st.columns(2)
 
-if not uploaded_files:
-    st.info("Upload one or more JSON files containing export_data.")
-    st.stop()
+with left:
+    uploaded_files = st.file_uploader(
+        "Upload results JSON (multiple files for comparison)",
+        type=["json"],
+        accept_multiple_files=True,
+    )
 
-# Load all data
-all_data = {}
-for uploaded in uploaded_files:
-    data = json.load(uploaded)
-    all_data[uploaded.name] = data
+    if not uploaded_files:
+        st.info("Upload one or more JSON files containing export_data.")
+        st.stop()
 
-# General information comparison
-st.subheader("General Information")
-general_df = pd.DataFrame(
-    [
-        {
-            "File": name,
-            "Algorithm": data.get("general_information", {}).get("algorithm", "?"),
-            "Steps": data.get("general_information", {}).get("steps", 0),
-            "Events": data.get("general_information", {}).get("events", 0),
-            "Map Shape": str(
-                tuple(data.get("general_information", {}).get("map_shape", (0, 0)))
-            ),
-        }
-        for name, data in all_data.items()
-    ]
-)
-st.dataframe(general_df, use_container_width=True)
+    # Load all data
+    all_data = {}
+    for uploaded in uploaded_files:
+        data = json.load(uploaded)
+        all_data[uploaded.name] = data
+
+with right:
+    # General information comparison
+    st.subheader("General Information")
+    general_df = pd.DataFrame(
+        [
+            {
+                "File": name,
+                "Algorithm": data.get("general_information", {}).get("algorithm", "?"),
+                "Steps": data.get("general_information", {}).get("steps", 0),
+                "Events": data.get("general_information", {}).get("events", 0),
+                "Map Shape": str(
+                    tuple(data.get("general_information", {}).get("map_shape", (0, 0)))
+                ),
+            }
+            for name, data in all_data.items()
+        ]
+    )
+    st.dataframe(general_df, width='stretch')
 
 # Histories
 st.subheader("Histories Comparison")
@@ -69,7 +72,7 @@ with left:
             color="file",
             title="Average Idleness",
         )
-        st.plotly_chart(fig_avg, use_container_width=True)
+        st.plotly_chart(fig_avg, width='stretch')
 
     # Maximum Idleness
     df_max_all = []
@@ -91,7 +94,7 @@ with left:
             color="file",
             title="Maximum Idleness",
         )
-        st.plotly_chart(fig_max, use_container_width=True)
+        st.plotly_chart(fig_max, width='stretch')
 
 # Right column: coverage metrics
 with right:
@@ -129,7 +132,7 @@ with right:
             color="file",
             title="Total Coverage",
         )
-        st.plotly_chart(fig_coverage, use_container_width=True)
+        st.plotly_chart(fig_coverage, width='stretch')
 
     # Agents Work
     df_work_all = []
@@ -163,7 +166,7 @@ with right:
             color="file",
             title="Total Agents Work",
         )
-        st.plotly_chart(fig_work, use_container_width=True)
+        st.plotly_chart(fig_work, width='stretch')
 
 # Individual file details
 st.subheader("Individual File Details")
@@ -201,7 +204,7 @@ if selected_file:
                 color="agent",
                 title=f"Coverage by Agent - {selected_file}",
             )
-            st.plotly_chart(fig_agents, use_container_width=True)
+            st.plotly_chart(fig_agents, width='stretch')
 
     with right:
         if agentswork:
@@ -219,7 +222,7 @@ if selected_file:
                 color="agent",
                 title=f"Agents Work History - {selected_file}",
             )
-            st.plotly_chart(fig_agentswork, use_container_width=True)
+            st.plotly_chart(fig_agentswork, width='stretch')
 
 # Show raw JSON if needed
 with st.expander("Raw JSON"):
