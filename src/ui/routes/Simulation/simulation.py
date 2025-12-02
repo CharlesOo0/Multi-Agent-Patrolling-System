@@ -41,8 +41,8 @@ class SimPage(Page):
         loader = MapLoader()
         MAP = loader.load(sim_config.map_name)
         PNG_MAP = loader.load_png(sim_config.map_name)
-        offset_x,offset_y,nbr_rows,nbr_cols = loader.load_parameters(sim_config.map_name)
-        self.viz = Visualization(screen.get_size(), MAP, PNG_MAP, offset_x,offset_y,nbr_rows,nbr_cols)
+        offset_x,offset_y,nbr_rows,nbr_cols,map_scale = loader.load_parameters(sim_config.map_name)
+        self.viz = Visualization(screen.get_size(), MAP, PNG_MAP, offset_x,offset_y,nbr_rows,nbr_cols,map_scale)
 
         # Perform any finalization when simulation ends
         def _finish():

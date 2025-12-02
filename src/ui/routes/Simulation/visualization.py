@@ -10,7 +10,7 @@ import colorsys
 import numpy as np
 
 class Visualization:
-    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int) -> None:
+    def __init__(self, WINDOW_SIZE: Tuple[int, int], map: np.ndarray, map_png : Path, offset_x : int, offset_y : int,nbr_rows : int, nbr_cols : int,map_scale:float) -> None:
         """Initialize the visualization window and layout for the grid.
 
         Args:
@@ -22,7 +22,14 @@ class Visualization:
         # Map and grid parameters
         self.MARGIN: int = 1
         self.map: np.ndarray = map
+        self.map_scale = map_scale
+
+        #Resize of Background Image
         self.background_image: pygame.Surface = pygame.image.load(map_png).convert_alpha()
+        w, h = self.background_image.get_size()
+        new_w = int(w * self.map_scale)
+        new_h = int(h * self.map_scale)
+        self.background_image = pygame.transform.smoothscale(self.background_image, (new_w, new_h))
 
         # Colors and utils
         self.utils: viz_utils = viz_utils()
