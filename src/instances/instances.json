@@ -1,0 +1,85 @@
+{
+    "agents": [
+        {
+            "name": "str",
+            "id": 0,
+            "nb_agent": 4,
+            "position": [
+                [
+                    25,
+                    12
+                ],
+                [
+                    12,
+                    1
+                ],
+                [
+                    5,
+                    15
+                ],
+                [
+                    21,
+                    3
+                ]
+            ],
+            "map_name": "DUST2"
+        },
+        {
+            "name": "str2",
+            "id": 2,
+            "nb_agent": 4,
+            "position": [
+                [
+                    25,
+                    12
+                ],
+                [
+                    12,
+                    1
+                ],
+                [
+                    5,
+                    15
+                ],
+                [
+                    21,
+                    3
+                ]
+            ],
+            "map_name": "test"
+        },
+        {
+            "name": "name",
+            "id": 5,
+            "nb_agent": 10,
+            "position": [
+                [
+                    4,
+                    5
+                ],
+                [
+                    6,
+                    7
+                ]
+            ],
+            "map_name": "map_name"
+        }
+    ],
+    "events": [
+        {
+            "name": "str2",
+            "id": 1,
+            "event_type": "test"
+        },
+        {
+            "name": "naaaaa",
+            "id": 2,
+            "event_type": "event_type"
+        },
+        {
+            "name": "name",
+            "id": 0,
+            "event_type": "event_type"
+        }
+    ]
+}
