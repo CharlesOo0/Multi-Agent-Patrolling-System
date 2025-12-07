@@ -35,6 +35,30 @@ class SimConfig:
         }
     )
 
+    # Mapping interne -> nom affiché (façade) pour l'UI
+    algo_display_map: Dict[str, str] = field(
+        default_factory=lambda: {
+            "Heuristic": "Heuristic",
+            "AntColony": "Ant Colony (Custom)",
+            "AntColonyLecture": "Ant Colony (AI50 Version)",
+        }
+    )
+
+    # Ordre d'affichage des algorithmes
+    algo_order: list[str] = field(default_factory=lambda: ["Heuristic", "AntColony", "AntColonyLecture"])
+
+    def internal_to_display(self, internal: str) -> str:
+        return self.algo_display_map.get(internal, internal)
+
+    def display_to_internal(self, display: str) -> str:
+        for k, v in self.algo_display_map.items():
+            if v == display:
+                return k
+        return display
+
+    def algo_display_options(self) -> list[str]:
+        return [self.algo_display_map.get(k, k) for k in self.algo_order]
+
 
 # Global config instance
 sim_config = SimConfig()

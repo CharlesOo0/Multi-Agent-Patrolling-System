@@ -61,8 +61,8 @@ class SettingsPage(Page):
         # Algorithm selector
         self._algo_selector = CycleSelector(
             x0 + 220, y0, ctrl_w, ctrl_h,
-            options=["Heuristic", "AntColony", "AntColonyLecture"],
-            value=sim_config.algorithm,
+            options=sim_config.algo_display_options(),
+            value=sim_config.internal_to_display(sim_config.algorithm),
             on_change=self._on_algo_change,
         )
 
@@ -196,7 +196,7 @@ class SettingsPage(Page):
 
     # Callbacks
     def _on_algo_change(self, name: str) -> None:
-        sim_config.algorithm = name
+        sim_config.algorithm = sim_config.display_to_internal(name)
 
     def _on_map_change(self, name: str) -> None:
         sim_config.map_name = name
