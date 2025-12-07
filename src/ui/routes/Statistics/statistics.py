@@ -10,6 +10,12 @@ from ui.components.button import Button
 from ui.components.utils import viz_utils
 from ui.routes.base import Page
 import json
+import os
+import sys
+import subprocess
+import socket
+import shutil
+import webbrowser
 
 
 class StatsPage(Page):
@@ -32,6 +38,7 @@ class StatsPage(Page):
         self._btn_home: Button | None = None
         self._btn_rerun: Button | None = None
         self._btn_export: Button | None = None
+        self._streamlit_process = None
         self._ready = False
         self.results: Dict[str, Any] | None = None
 
@@ -77,6 +84,194 @@ class StatsPage(Page):
 
         print(f"Statistics exported to {filename}")
 
+    def _open_in_browser(self, url) -> None:
+        """ Open URL in Google Chrome if available, else default browser. """
+        chrome_bins = []
+        try:
+            c = shutil.which("chrome")
+            if c:
+                chrome_bins.append(c)
+            c2 = shutil.which("chrome.exe")
+            if c2 and c2 not in chrome_bins:
+                chrome_bins.append(c2)
+        except Exception:
+            pass
+
+        if os.name == "nt":
+            pf = os.environ.get("ProgramFiles", r"C:\Program Files")
+            pf86 = os.environ.get("ProgramFiles(x86)", r"C:\Program Files (x86)")
+            for pth in [
+                os.path.join(pf, "Google", "Chrome", "Application", "chrome.exe"),
+                os.path.join(pf86, "Google", "Chrome", "Application", "chrome.exe"),
+            ]:
+                if os.path.exists(pth) and pth not in chrome_bins:
+                    chrome_bins.append(pth)
+
+        opened = False
+        for ch in chrome_bins:
+            try:
+                subprocess.Popen(
+                    [ch, url],
+                    stdout=subprocess.DEVNULL,
+                    stderr=subprocess.DEVNULL,
+                )
+                opened = True
+                break
+            except Exception:
+                continue
+
+        if not opened:
+            try:
+                webbrowser.open(url)
+            except Exception:
+                pass
+
+    def _launch_streamlit(self, port = 8501) -> None:
+        """Launch Streamlit UI:
+
+        - Do nothing if a Streamlit process started by this instance is already running
+        - Ensure Streamlit is available in the project venv (if present), else fall back to current Python
+        - Write minimal ~/.streamlit configs to bypass email + disable usage stats
+        - If port 8501 is used, kill the process using it
+        - Start Streamlit on port 8501 and open it in Google Chrome (fallback to default web browser)
+        - Additionally: send empty input to stdin to bypass any email prompt
+        """
+        url = f"http://localhost:{port}"
+
+        # 1) If we already started a Streamlit process and it's still alive then reopening the UI
+        try:
+            if getattr(self, "_streamlit_process", None) is not None and self._streamlit_process.poll() is None:
+                print("Streamlit already running")
+                self._open_in_browser(url)
+                return
+        except Exception:
+            self._streamlit_process = None
+
+        # 2) Locate the Streamlit script
+        base = os.path.dirname(__file__)
+        candidate_paths = [
+            os.path.abspath(os.path.join(base, "..", "..", "..", "streamlit", "stats.py")),
+            os.path.abspath(os.path.join(base, "..", "..", "..", "..", "streamlit", "stats.py")),
+        ]
+
+        script: Optional[str] = None
+        for cand in candidate_paths:
+            if os.path.exists(cand):
+                script = cand
+                break
+
+        if script is None:
+            print("streamlit script not found")
+            return
+
+        # 3) Prefer project venv's Python if available
+        proj = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+        p_venv = os.path.join(proj, "venv", "Scripts", "python.exe")
+        p_alt = os.path.join(proj, ".venv", "Scripts", "python.exe")
+
+        py = sys.executable
+        if os.path.exists(p_venv):
+            py = p_venv
+        elif os.path.exists(p_alt):
+            py = p_alt
+
+        # 4) Check that Streamlit is importable in that Python
+        try:
+            ok = subprocess.run(
+                [py, "-c", "import streamlit"],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+            if ok.returncode != 0:
+                print("streamlit not installed for", py)
+                return
+        except Exception:
+            print("failed to check streamlit")
+            return
+
+        # 5) Write minimal Streamlit config to bypass email + usage stats
+        try:
+            cfg_dir = os.path.join(os.path.expanduser("~"), ".streamlit")
+            os.makedirs(cfg_dir, exist_ok=True)
+
+            with open(os.path.join(cfg_dir, "credentials.toml"), "w", encoding="utf-8") as f:
+                f.write('email = ""\n')
+
+            with open(os.path.join(cfg_dir, "config.toml"), "w", encoding="utf-8") as f:
+                f.write("[browser]\n")
+                f.write("gatherUsageStats = false\n")
+        except Exception:
+            # Non-fatal
+            pass
+
+        # 6) Port handling
+        def port_used(p: int) -> bool:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+                try:
+                    s.settimeout(0.3)
+                    s.connect(("127.0.0.1", p))
+                    return True
+                except Exception:
+                    return False
+
+        def kill_port(p: int) -> None:
+            out = subprocess.check_output(["netstat", "-ano"], encoding="utf-8", errors="ignore")
+            for line in out.splitlines():
+                if f":{p} " in line and "LISTENING" in line:
+                    parts = line.split()
+                    if parts:
+                        pid = parts[-1]
+                        subprocess.run(
+                            ["taskkill", "/F", "/PID", pid],
+                            stdout=subprocess.DEVNULL,
+                            stderr=subprocess.DEVNULL,
+                        )
+
+        if port_used(port):
+            kill_port(port)
+
+        # 7) Launch Streamlit (with PIPE stdin so we can send an empty line)
+        log = open("streamlit_run.log", "a", encoding="utf-8")
+        cmd = [
+            py,
+            "-m",
+            "streamlit",
+            "run",
+            script,
+            "--server.headless", "true",
+            "--server.port", str(port),
+        ]
+
+        try:
+            self._streamlit_process = subprocess.Popen(
+                cmd,
+                stdout=log,
+                stderr=log,
+                stdin=subprocess.PIPE,   # <<< changed from DEVNULL
+            )
+        except Exception as e:
+            print("failed to launch streamlit:", e)
+            try:
+                log.close()
+            except Exception:
+                pass
+            return
+
+        # 7bis) Send empty "email" + Enter to stdin to bypass prompt (if any)
+        try:
+            if self._streamlit_process.stdin:
+                # One or two newlines, in case Streamlit asks more than once
+                self._streamlit_process.stdin.write(b"\n\n")
+                self._streamlit_process.stdin.flush()
+        except Exception:
+            # If this fails, Streamlit will still run; worst case prompt remains
+            pass
+
+        # 8) Open in browser
+        self._open_in_browser(url)
+
+        print(f"Streamlit launched on {url}")
+
     def _ensure_ui(self, screen: pygame.Surface) -> None:
         if self._ready:
             return
@@ -99,14 +294,14 @@ class StatsPage(Page):
             20,
             bw,
             bh,
-            "Exporter",
+            "Streamlit",
             self.utils.GRAY,
             self.utils.LIGHT_GRAY,
         )
         self._ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
-        for b in (self._btn_home, self._btn_rerun):
+        for b in (self._btn_home, self._btn_rerun, self._btn_export):
             if b:
                 b.hover_property(event)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -116,7 +311,8 @@ class StatsPage(Page):
             if self._btn_rerun and self._btn_rerun.is_clicked(pos, event):
                 self.go_sim()
             if self._btn_export and self._btn_export.is_clicked(pos, event):
-                self._export_to_json()
+                # Lance l'interface Streamlit
+                self._launch_streamlit()
 
     def update(self, dt: float) -> None:
         pass
