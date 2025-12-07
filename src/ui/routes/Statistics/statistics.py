@@ -3,10 +3,13 @@ from __future__ import annotations
 from typing import Optional, Callable, Dict, Any, List
 import pygame
 import numpy as np
+import csv
+from datetime import datetime
 
 from ui.components.button import Button
 from ui.components.utils import viz_utils
 from ui.routes.base import Page
+import json
 
 
 class StatsPage(Page):
@@ -28,6 +31,7 @@ class StatsPage(Page):
         self.small = pygame.font.SysFont(None, 24)
         self._btn_home: Button | None = None
         self._btn_rerun: Button | None = None
+        self._btn_export: Button | None = None
         self._ready = False
         self.results: Dict[str, Any] | None = None
 
@@ -39,6 +43,39 @@ class StatsPage(Page):
 
     def on_exit(self, next: Optional[str] = None) -> None:
         pass
+
+    def _export_to_json(self) -> None:
+
+        if not self.results:
+            return
+
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        filename = f"stats_export_{timestamp}.json"
+
+        export_data = {
+            "general_information": {
+                "algorithm": self.results.get("algorithm_name", "?"),
+                "steps": self.results.get("steps", 0),
+                "events": self.results.get("event_count", 0),
+                "map_shape": self.results.get("map_shape", (0, 0)),
+            },
+            "average_idleness_history": self.results.get("average_idleness_history", [])
+            or [],
+            "maximum_idleness_history": self.results.get("maximum_idleness_history", [])
+            or [],
+            "total_coverage_history": self.results.get("total_coverage_history", [])
+            or [],
+            "coverage_by_agent_history": self.results.get(
+                "coverage_by_agent_history", []
+            )
+            or [],
+            "agentswork_history": self.results.get("agentswork_history", []) or [],
+        }
+
+        with open(filename, "w", encoding="utf-8") as jsonfile:
+            json.dump(export_data, jsonfile, indent=2, ensure_ascii=False)
+
+        print(f"Statistics exported to {filename}")
 
     def _ensure_ui(self, screen: pygame.Surface) -> None:
         if self._ready:
@@ -57,6 +94,15 @@ class StatsPage(Page):
             self.utils.GRAY,
             self.utils.LIGHT_GRAY,
         )
+        self._btn_export = Button(
+            20 + 2 * (160 + gap),
+            20,
+            bw,
+            bh,
+            "Exporter",
+            self.utils.GRAY,
+            self.utils.LIGHT_GRAY,
+        )
         self._ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -69,6 +115,8 @@ class StatsPage(Page):
                 self.go_home()
             if self._btn_rerun and self._btn_rerun.is_clicked(pos, event):
                 self.go_sim()
+            if self._btn_export and self._btn_export.is_clicked(pos, event):
+                self._export_to_json()
 
     def update(self, dt: float) -> None:
         pass
@@ -150,6 +198,8 @@ class StatsPage(Page):
             self._btn_home.draw(screen)
         if self._btn_rerun:
             self._btn_rerun.draw(screen)
+        if self._btn_export:
+            self._btn_export.draw(screen)
 
         if not self.results:
             msg = self.small.render(
