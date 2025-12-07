@@ -3,6 +3,7 @@ import numpy as np
 import random
 from typing import List, Tuple
 from events import EventManager
+from ui.config import sim_config
 
 
 class Algorithm(ABC):
@@ -258,23 +259,24 @@ class Algorithm(ABC):
         Returns:
             List of (x, y) tuples representing initial positions of agents.
         """
-        # Check if there are enough cells for all agents
-        if self.num_agents > self.width * self.height:
-            # Fallback: reduce agents to fit in the grid
-            self.num_agents = self.width * self.height
-            print(
-                f"Warning: Reduced number of agents to {self.num_agents} to fit in the grid."
-            )
-
         positions = []
+        if sim_config.agent_instance_name != "no instance":
+            positions=sim_config.instance_manager.getPositiontFromInstance(sim_config.agent_instance_name)
+        else:
+            # Check if there are enough cells for all agents
+            if self.num_agents > self.width * self.height:
+                # Fallback: reduce agents to fit in the grid
+                self.num_agents = self.width * self.height
+                print(
+                    f"Warning: Reduced number of agents to {self.num_agents} to fit in the grid."
+                )
 
-        for _ in range(self.num_agents):
-            # Make sure agents dont start on the same cell or on an obstacle
-            while True:
-                x = random.randint(0, self.width - 1)
-                y = random.randint(0, self.height - 1)
-                if (x, y) not in positions and self.map[x, y] == 0:
-                    positions.append((x, y))
-                    break
-
+            for _ in range(self.num_agents):
+                # Make sure agents dont start on the same cell or on an obstacle
+                while True:
+                    x = random.randint(0, self.width - 1)
+                    y = random.randint(0, self.height - 1)
+                    if (x, y) not in positions and self.map[x, y] == 0:
+                        positions.append((x, y))
+                        break
         return positions
