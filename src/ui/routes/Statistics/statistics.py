@@ -41,6 +41,7 @@ class StatsPage(Page):
         self._streamlit_process = None
         self._ready = False
         self.results: Dict[str, Any] | None = None
+        self._export_to_json()
 
     def set_results(self, results: Dict[str, Any]) -> None:
         self.results = results
@@ -333,11 +334,6 @@ class StatsPage(Page):
             if self._btn_rerun and self._btn_rerun.is_clicked(pos, event):
                 self.go_sim()
             if self._btn_export and self._btn_export.is_clicked(pos, event):
-                # Exporte les résultats dans `src/streamlit/saves` puis lance Streamlit
-                try:
-                    self._export_to_json()
-                except Exception as e:
-                    print("Erreur lors de l'export avant lancement de Streamlit:", e)
                 self._launch_streamlit()
 
     def update(self, dt: float) -> None:
