@@ -2,6 +2,7 @@ import json
 import pandas as pd
 import streamlit as st
 import plotly.express as px
+import os
 
 st.set_page_config(page_title="Stats", layout="wide", initial_sidebar_state="expanded")
 
@@ -9,22 +10,43 @@ st.title("Simulation Stats")
 
 left, right = st.columns(2)
 
+# Prefer loading saved JSONs from `src/streamlit/saves` if present.
 with left:
-    uploaded_files = st.file_uploader(
-        "Upload results JSON (multiple files for comparison)",
-        type=["json"],
-        accept_multiple_files=True,
-    )
+    base_dir = os.path.dirname(__file__)
+    saves_dir = os.path.join(base_dir, "saves")
+    saved_files = []
+    if os.path.exists(saves_dir):
+        saved_files = sorted([f for f in os.listdir(saves_dir) if f.lower().endswith(".json")])
 
-    if not uploaded_files:
-        st.info("Upload one or more JSON files containing export_data.")
-        st.stop()
-
-    # Load all data
     all_data = {}
-    for uploaded in uploaded_files:
-        data = json.load(uploaded)
-        all_data[uploaded.name] = data
+
+    if saved_files:
+        st.info(f"Found {len(saved_files)} saved JSON file(s) in `{saves_dir}`")
+        selected = st.multiselect("Select saved JSON files to load", saved_files, default=saved_files)
+        for name in selected:
+            path = os.path.join(saves_dir, name)
+            try:
+                with open(path, "r", encoding="utf-8") as fp:
+                    data = json.load(fp)
+                all_data[name] = data
+            except Exception as e:
+                st.error(f"Failed to load {name}: {e}")
+
+    # Allow uploading additional files as a fallback or supplement
+    uploaded_files = st.file_uploader(
+        "Ouploader des JSON additionnels (optionnel)", type=["json"], accept_multiple_files=True
+    )
+    if uploaded_files:
+        for uploaded in uploaded_files:
+            try:
+                data = json.load(uploaded)
+                all_data[uploaded.name] = data
+            except Exception as e:
+                st.error(f"Failed to parse uploaded file {uploaded.name}: {e}")
+
+    if not all_data:
+        st.info("Aucun résultat disponible. Ajoutez des fichiers JSON dans `src/streamlit/saves` ou téléversez des JSONs.")
+        st.stop()
 
 with right:
     # General information comparison

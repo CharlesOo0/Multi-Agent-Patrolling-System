@@ -55,9 +55,12 @@ class StatsPage(Page):
 
         if not self.results:
             return
-
+        # Save exports into project `src/streamlit/saves` directory so
+        # the Streamlit app can load them directly.
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"stats_export_{timestamp}.json"
+       
+        algo_name = str(self.results.get("algorithm_name", "unknown")).lower().replace(" ", "_")
+        filename = f"{algo_name}_{timestamp}_stats.json"
 
         export_data = {
             "general_information": {
@@ -79,10 +82,29 @@ class StatsPage(Page):
             "agentswork_history": self.results.get("agentswork_history", []) or [],
         }
 
-        with open(filename, "w", encoding="utf-8") as jsonfile:
-            json.dump(export_data, jsonfile, indent=2, ensure_ascii=False)
+        # Compute project root and target saves directory
+        proj = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+        saves_dir = os.path.join(proj, "src", "streamlit", "saves")
+        try:
+            os.makedirs(saves_dir, exist_ok=True)
+        except Exception:
+            # fallback to current dir if mkdir fails for some reason
+            saves_dir = os.path.abspath(os.path.join(os.getcwd()))
 
-        print(f"Statistics exported to {filename}")
+        filepath = os.path.join(saves_dir, filename)
+
+        try:
+            with open(filepath, "w", encoding="utf-8") as jsonfile:
+                json.dump(export_data, jsonfile, indent=2, ensure_ascii=False)
+            print(f"Statistics exported to {filepath}")
+        except Exception as e:
+            # last-resort: write to cwd
+            try:
+                with open(filename, "w", encoding="utf-8") as jsonfile:
+                    json.dump(export_data, jsonfile, indent=2, ensure_ascii=False)
+                print(f"Statistics exported to {filename} (fallback). Error: {e}")
+            except Exception:
+                print("Failed to export statistics:", e)
 
     def _open_in_browser(self, url) -> None:
         """ Open URL in Google Chrome if available, else default browser. """
@@ -311,7 +333,11 @@ class StatsPage(Page):
             if self._btn_rerun and self._btn_rerun.is_clicked(pos, event):
                 self.go_sim()
             if self._btn_export and self._btn_export.is_clicked(pos, event):
-                # Lance l'interface Streamlit
+                # Exporte les résultats dans `src/streamlit/saves` puis lance Streamlit
+                try:
+                    self._export_to_json()
+                except Exception as e:
+                    print("Erreur lors de l'export avant lancement de Streamlit:", e)
                 self._launch_streamlit()
 
     def update(self, dt: float) -> None:
