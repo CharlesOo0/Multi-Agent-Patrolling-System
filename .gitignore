@@ -10,3 +10,9 @@ __pycache__/
 
 # VsCode settings
 .vscode/
+
+# Log files
+*.log
+
+# Statistics export files
+/src/streamlit/saves/*
