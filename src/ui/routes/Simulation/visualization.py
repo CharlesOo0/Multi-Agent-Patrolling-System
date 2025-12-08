@@ -248,7 +248,7 @@ class Visualization:
         sim_secs = int(self.sim_time)
         mm = sim_secs // 60
         ss = sim_secs % 60
-        timer_text = self.font.render(f"Temps (x{self.speed_multiplier:.1f}): {mm:02d}:{ss:02d}", True, self.utils.BLACK)
+        timer_text = self.font.render(f"Time (x{self.speed_multiplier:.1f}): {mm:02d}:{ss:02d}", True, self.utils.BLACK)
         # Positionné dans la barre inférieure (aligné à gauche, centré verticalement)
         x = self.bottom_bar_rect.left + 10
         y = self.bottom_bar_rect.centery - timer_text.get_height() // 2
@@ -289,7 +289,7 @@ class Visualization:
         SMALL_W: int = 48
 
         #Accueil button (top left)        
-        self._back_btn = Button(20, 20, 140, 44, "Accueil", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._back_btn = Button(20, 20, 140, 44, "Home", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self._back_btn.draw(self.screen)
         # Finish button (right)
         qx = self.bottom_bar_rect.right - BUTTON_WIDTH - GAP
@@ -299,7 +299,7 @@ class Visualization:
             by,
             BUTTON_WIDTH,
             BUTTON_HEIGHT,
-            "Terminer",
+            "Finish",
             self.utils.GRAY,
             self.utils.LIGHT_GRAY,
         )
@@ -320,7 +320,7 @@ class Visualization:
 
         # Speed controls group placed to the left of Reset button
         label_font = pygame.font.SysFont(None, 28)
-        label = label_font.render(f"Vitesse: {self.speed_multiplier:.1f}", True, self.utils.BLACK)
+        label = label_font.render(f"Speed: {self.speed_multiplier:.1f}", True, self.utils.BLACK)
         group_width = SMALL_W + 8 + SMALL_W + 16 + label.get_width()
         sx = rx - GAP - group_width
 
@@ -357,7 +357,7 @@ class Visualization:
 
         # Title
         title_font = pygame.font.SysFont(None, 28)
-        title_surf = title_font.render("Événements", True, self.utils.BLACK)
+        title_surf = title_font.render("Events", True, self.utils.BLACK)
         self.screen.blit(title_surf, (self.logs_rect.left + 10, self.logs_rect.top + 8))
 
         # Entries

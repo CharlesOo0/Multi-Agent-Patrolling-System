@@ -19,9 +19,9 @@ import webbrowser
 
 
 class StatsPage(Page):
-    """Page d'affichage des statistiques de la simulation avec graphes.
+    """Simulation statistics display page with graphs.
 
-    Attendu: recevoir un dictionnaire 'results' via set_results() contenant
+    Expected: receive a 'results' dictionary via set_results() containing
     - 'algorithm_name': str
     - 'steps': int
     - 'average_idleness_history': List[float]
@@ -408,7 +408,7 @@ class StatsPage(Page):
         screen.fill(self.utils.WHITE)
 
         title = self.font.render(
-            "Statistiques de la simulation", True, self.utils.BLACK
+            "Simulation Statistic", True, self.utils.BLACK
         )
         screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 20))
 
@@ -422,7 +422,7 @@ class StatsPage(Page):
 
         if not self.results:
             msg = self.small.render(
-                "Aucune donnée de simulation.", True, self.utils.BLACK
+                "No simulation data", True, self.utils.BLACK
             )
             screen.blit(msg, (50, 100))
             return
@@ -435,22 +435,22 @@ class StatsPage(Page):
 
         info_y = 90
         info_lines = [
-            f"Algorithme: {algo}",
-            f"Pas exécutés: {steps}",
-            f"Événements: {events}",
-            f"Taille carte: {map_shape}",
+            f"Algorithm: {algo}",
+            f"Steps done: {steps}",
+            f"Events: {events}",
+            f"Map Size: {map_shape}",
         ]
         for i, line in enumerate(info_lines):
             txt = self.small.render(line, True, self.utils.BLACK)
             screen.blit(txt, (50, info_y + i * 22))
 
-        # Graphique 1: moyenne d'oisiveté dans le temps
+        # Graph 1 : average idleness across history
         avg = self.results.get("average_idleness_history", []) or []
         g1_rect = pygame.Rect(50, 250, (screen.get_width() - 100) / 2, 180)
         self._draw_axes(screen, g1_rect)
         self._plot_line(screen, g1_rect, avg)
         # labels
-        x_lbl = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        x_lbl = self.small.render("Steps done", True, self.utils.BLACK)
         screen.blit(
             x_lbl,
             (
@@ -458,7 +458,7 @@ class StatsPage(Page):
                 g1_rect.bottom - 18,
             ),
         )
-        y_lbl_surf = self.small.render("Valeur", True, self.utils.BLACK)
+        y_lbl_surf = self.small.render("Value", True, self.utils.BLACK)
         y_lbl = pygame.transform.rotate(y_lbl_surf, 90)
         screen.blit(
             y_lbl,
@@ -469,11 +469,11 @@ class StatsPage(Page):
         )
         last_avg = f"{avg[-1]:.2f}" if avg else "n/a"
         g1_label = self.small.render(
-            f"Moyenne d'oisiveté: {last_avg} points", True, self.utils.BLACK
+            f"Average Idleness: {last_avg} points", True, self.utils.BLACK
         )
         screen.blit(g1_label, (g1_rect.left, g1_rect.top - 20))
 
-        # Graphique 2: maximum d'oisiveté dans le temps
+        # Graph 2: Max idlness in history
         max_hist = self.results.get("maximum_idleness_history", []) or []
         g2_rect = pygame.Rect(
             50 + (screen.get_width() - 100) / 2,
@@ -485,7 +485,7 @@ class StatsPage(Page):
         # use a different color for the max line
         self._plot_line(screen, g2_rect, max_hist, color=(220, 20, 60))
         # labels
-        x_lbl2 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        x_lbl2 = self.small.render("Steps done", True, self.utils.BLACK)
         screen.blit(
             x_lbl2,
             (
@@ -493,7 +493,7 @@ class StatsPage(Page):
                 g2_rect.bottom - 18,
             ),
         )
-        y_lbl2_surf = self.small.render("Valeur", True, self.utils.BLACK)
+        y_lbl2_surf = self.small.render("Value", True, self.utils.BLACK)
         y_lbl2 = pygame.transform.rotate(y_lbl2_surf, 90)
         screen.blit(
             y_lbl2,
@@ -504,11 +504,11 @@ class StatsPage(Page):
         )
         last_max = f"{max_hist[-1]:.2f}" if max_hist else "n/a"
         g2_label = self.small.render(
-            f"Maximum d'oisiveté: {last_max} points", True, self.utils.BLACK
+            f"Max Idleness: {last_max} points", True, self.utils.BLACK
         )
         screen.blit(g2_label, (g2_rect.left, g2_rect.top - 20))
 
-        # Graphique 3: couverture totale dans le temps
+        #Graph 3: total coverage in history
         total_cov = self.results.get("total_coverage_history", []) or []
         g3_rect = pygame.Rect(
             50, g2_rect.bottom + 50, (screen.get_width() - 100) / 2, 180
@@ -517,7 +517,7 @@ class StatsPage(Page):
         # use a different color for the total coverage line
         self._plot_line(screen, g3_rect, total_cov, color=(220, 20, 60))
         # labels
-        x_lbl3 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        x_lbl3 = self.small.render("Steps done", True, self.utils.BLACK)
         screen.blit(
             x_lbl3,
             (
@@ -525,7 +525,7 @@ class StatsPage(Page):
                 g3_rect.bottom - 18,
             ),
         )
-        y_lbl3_surf = self.small.render("Couverture", True, self.utils.BLACK)
+        y_lbl3_surf = self.small.render("Coverage", True, self.utils.BLACK)
         y_lbl3 = pygame.transform.rotate(y_lbl3_surf, 90)
         screen.blit(
             y_lbl3,
@@ -536,11 +536,11 @@ class StatsPage(Page):
         )
         last_total = f"{total_cov[-1]:.2f}" if total_cov else "n/a"
         g3_label = self.small.render(
-            f"Couverture totale: {last_total}", True, self.utils.BLACK
+            f"Total coverage: {last_total}", True, self.utils.BLACK
         )
         screen.blit(g3_label, (g3_rect.left, g3_rect.top - 20))
 
-        # Graphique 4: Coverage par agent
+        # Graph 4: Coverage per agent in history
         cov_hist = self.results.get("coverage_by_agent_history", []) or []
         g4_rect = pygame.Rect(
             50 + (screen.get_width() - 100) / 2,
@@ -548,11 +548,11 @@ class StatsPage(Page):
             (screen.get_width() - 100) / 2,
             180,
         )
-        g4_label = self.small.render("Couverture par agent", True, self.utils.BLACK)
+        g4_label = self.small.render("Coverage by agent", True, self.utils.BLACK)
         screen.blit(g4_label, (g4_rect.left, g4_rect.top - 20))
         self._draw_axes(screen, g4_rect)
         # labels
-        x_lbl4 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        x_lbl4 = self.small.render("Steps done", True, self.utils.BLACK)
         screen.blit(
             x_lbl4,
             (
@@ -560,7 +560,7 @@ class StatsPage(Page):
                 g4_rect.bottom - 18,
             ),
         )
-        y_lbl4_surf = self.small.render("Couverture", True, self.utils.BLACK)
+        y_lbl4_surf = self.small.render("Coverage", True, self.utils.BLACK)
         y_lbl4 = pygame.transform.rotate(y_lbl4_surf, 90)
         screen.blit(
             y_lbl4,

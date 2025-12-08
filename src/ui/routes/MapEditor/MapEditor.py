@@ -79,7 +79,7 @@ class MapEditorPage(Page):
         if self._ready:
             return
         w, h = screen.get_size()
-        self._btn_back = Button(20, 20, 140, 44, "Retour", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_back = Button(20, 20, 140, 44, "Back", self.utils.GRAY, self.utils.LIGHT_GRAY)
         # Discover maps dynamically by scanning the maps folder for .json files
         loader = MapLoader()
         try:
@@ -302,7 +302,7 @@ class MapEditorPage(Page):
             screen.blit(overlay, (base_x, base_y))
 
         # UI elements
-        title = self.font.render("Editeur de Carte", True, self.utils.BLACK)
+        title = self.font.render("Map editor", True, self.utils.BLACK)
         screen.blit(title, (40, 90))
 
         if self.show_create_popup:
