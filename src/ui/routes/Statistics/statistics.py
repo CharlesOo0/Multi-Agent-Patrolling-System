@@ -502,7 +502,11 @@ class StatsPage(Page):
                 1,
             )
 
-        for step in range(min(20, max(len(avg), len(max_hist), len(total_cov)))):
+        max_rows = 20
+        total_rows = max(len(avg), len(max_hist), len(total_cov))
+        display_rows = min(max_rows - 1, total_rows)
+
+        for step in range(display_rows):
             table_y += row_height
             values = [
                 str(step + 1),
@@ -512,6 +516,18 @@ class StatsPage(Page):
             ]
             for i, val in enumerate(values):
                 txt = self.small.render(val, True, self.utils.BLACK)
+                screen.blit(txt, (start_x + i * col_width + 20, table_y + 5))
+                pygame.draw.rect(
+                    screen,
+                    self.utils.BLACK,
+                    (start_x + i * col_width, table_y, col_width, row_height),
+                    1,
+                )
+
+        if total_rows > display_rows:
+            table_y += row_height
+            for i in range(len(headers)):
+                txt = self.small.render("...", True, self.utils.BLACK)
                 screen.blit(txt, (start_x + i * col_width + 20, table_y + 5))
                 pygame.draw.rect(
                     screen,
