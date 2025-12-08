@@ -42,7 +42,7 @@ class SettingsPage(Page):
         if self._ready:
             return
         w, h = screen.get_size()
-        self._btn_back = Button(20, 20, 140, 44, "Retour", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_back = Button(20, 20, 140, 44, "Back", self.utils.GRAY, self.utils.LIGHT_GRAY)
         # Discover maps dynamically by scanning the maps folder for .json files
         loader = MapLoader()
         try:
@@ -144,18 +144,18 @@ class SettingsPage(Page):
     def render(self, screen: pygame.Surface) -> None:
         self._ensure_ui(screen)
         screen.fill(self.utils.WHITE)
-        title = self.font.render("Paramètres", True, self.utils.BLACK)
+        title = self.font.render("Settings", True, self.utils.BLACK)
         screen.blit(title, (40, 90))
 
         # Labels
         x0, y0 = 60, 150
         row_h = 58
         labels = [
-            ("Algorithme", y0),
-            ("Carte", y0 + row_h),
-            ("Nombre d'agents", y0 + 2 * row_h),
-            ("Taux de spawn event (0-1)", y0 + 3 * row_h),
-            ("Croissance idleness (0-1)", y0 + 4 * row_h),
+            ("Algorithm", y0),
+            ("Map", y0 + row_h),
+            ("Number of Agents", y0 + 2 * row_h),
+            ("Events spawn rate (0-1)", y0 + 3 * row_h),
+            ("Idleness growth rate (0-1)", y0 + 4 * row_h),
         ]
         for text, y in labels:
             surf = self.small.render(text, True, self.utils.BLACK)
