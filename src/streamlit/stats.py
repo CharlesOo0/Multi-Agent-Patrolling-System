@@ -51,9 +51,7 @@ with left:
                 st.error(f"Failed to parse uploaded file {uploaded.name}: {e}")
 
     if not all_data:
-        st.info(
-            "Aucun résultat disponible. Ajoutez des fichiers JSON dans `src/streamlit/saves` ou téléversez des JSONs."
-        )
+        st.info("No results available. Add JSON files to src/streamlit/saves or upload JSONs.")
         st.stop()
 
 with right:

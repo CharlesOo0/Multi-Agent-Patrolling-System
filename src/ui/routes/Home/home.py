@@ -34,9 +34,9 @@ class HomePage(Page):
         bw, bh, gap = 240, 60, 20
         cx = w // 2 - bw // 2
         cy = h // 2
-        self._btn_sim = Button(cx, cy - bh - gap, bw, bh, "Lancer simulation", self.utils.GRAY, self.utils.LIGHT_GRAY)
-        self._btn_settings = Button(cx, cy + gap, bw, bh, "Paramètres", self.utils.GRAY, self.utils.LIGHT_GRAY)
-        self._btn_edit_map = Button(cx, cy + bh + gap*3, bw, bh, "Editeur de Carte", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_sim = Button(cx, cy - bh - gap, bw, bh, "Start Simulation", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_settings = Button(cx, cy + gap, bw, bh, "Settings", self.utils.GRAY, self.utils.LIGHT_GRAY)
+        self._btn_edit_map = Button(cx, cy + bh + gap*3, bw, bh, "Map editor", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self._buttons_ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -62,7 +62,7 @@ class HomePage(Page):
         title = self.font.render("Multi-Agent Patrolling", True, self.utils.BLACK)
         screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 120))
 
-        subtitle = self.small.render("Page d'accueil", True, self.utils.BLACK)
+        subtitle = self.small.render("Home Page", True, self.utils.BLACK)
         screen.blit(subtitle, (screen.get_width() // 2 - subtitle.get_width() // 2, 180))
 
         if self._btn_sim:

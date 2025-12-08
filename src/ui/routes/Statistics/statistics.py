@@ -19,9 +19,9 @@ import webbrowser
 
 
 class StatsPage(Page):
-    """Page d'affichage des statistiques de la simulation avec graphes.
+    """Simulation statistics display page with graphs.
 
-    Attendu: recevoir un dictionnaire 'results' via set_results() contenant
+    Expected: receive a 'results' dictionary via set_results() containing
     - 'algorithm_name': str
     - 'steps': int
     - 'average_idleness_history': List[float]
@@ -429,7 +429,7 @@ class StatsPage(Page):
         screen.fill(self.utils.WHITE)
 
         title = self.font.render(
-            "Statistiques de la simulation", True, self.utils.BLACK
+            "Simulation Statistic", True, self.utils.BLACK
         )
         screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 20))
 
@@ -443,7 +443,7 @@ class StatsPage(Page):
 
         if not self.results:
             msg = self.small.render(
-                "Aucune donnée de simulation.", True, self.utils.BLACK
+                "No simulation data", True, self.utils.BLACK
             )
             screen.blit(msg, (50, 100))
             return
@@ -456,16 +456,16 @@ class StatsPage(Page):
 
         info_y = 90
         info_lines = [
-            f"Algorithme: {algo}",
-            f"Pas exécutés: {steps}",
-            f"Événements: {events}",
-            f"Taille carte: {map_shape}",
+            f"Algorithm: {algo}",
+            f"Steps done: {steps}",
+            f"Events: {events}",
+            f"Map Size: {map_shape}",
         ]
         for i, line in enumerate(info_lines):
             txt = self.small.render(line, True, self.utils.BLACK)
             screen.blit(txt, (50, info_y + i * 22))
 
-        # Tableau récapitulatif des résultats des graphiques par étape
+        # Summarizing tab for the result data
         avg = self.results.get("average_idleness_history", []) or []
         max_hist = self.results.get("maximum_idleness_history", []) or []
         total_cov = self.results.get("total_coverage_history", []) or []
@@ -475,7 +475,7 @@ class StatsPage(Page):
         row_height = 24
         col_width = 200
 
-        # En-têtes du tableau
+        # Header of the tab
         headers = [
             "Étape",
             "Moyenne d'oisiveté",
