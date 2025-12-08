@@ -16,13 +16,17 @@ with left:
     saves_dir = os.path.join(base_dir, "saves")
     saved_files = []
     if os.path.exists(saves_dir):
-        saved_files = sorted([f for f in os.listdir(saves_dir) if f.lower().endswith(".json")])
+        saved_files = sorted(
+            [f for f in os.listdir(saves_dir) if f.lower().endswith(".json")]
+        )
 
     all_data = {}
 
     if saved_files:
         st.info(f"Found {len(saved_files)} saved JSON file(s) in `{saves_dir}`")
-        selected = st.multiselect("Select saved JSON files to load", saved_files, default=saved_files)
+        selected = st.multiselect(
+            "Select saved JSON files to load", saved_files, default=saved_files[-1]
+        )
         for name in selected:
             path = os.path.join(saves_dir, name)
             try:
@@ -34,7 +38,9 @@ with left:
 
     # Allow uploading additional files as a fallback or supplement
     uploaded_files = st.file_uploader(
-        "Ouploader des JSON additionnels (optionnel)", type=["json"], accept_multiple_files=True
+        "Ouploader des JSON additionnels (optionnel)",
+        type=["json"],
+        accept_multiple_files=True,
     )
     if uploaded_files:
         for uploaded in uploaded_files:
@@ -45,7 +51,9 @@ with left:
                 st.error(f"Failed to parse uploaded file {uploaded.name}: {e}")
 
     if not all_data:
-        st.info("Aucun résultat disponible. Ajoutez des fichiers JSON dans `src/streamlit/saves` ou téléversez des JSONs.")
+        st.info(
+            "Aucun résultat disponible. Ajoutez des fichiers JSON dans `src/streamlit/saves` ou téléversez des JSONs."
+        )
         st.stop()
 
 with right:
@@ -65,7 +73,7 @@ with right:
             for name, data in all_data.items()
         ]
     )
-    st.dataframe(general_df, width='stretch')
+    st.dataframe(general_df, width="stretch")
 
 # Histories
 st.subheader("Histories Comparison")
@@ -94,7 +102,7 @@ with left:
             color="file",
             title="Average Idleness",
         )
-        st.plotly_chart(fig_avg, width='stretch')
+        st.plotly_chart(fig_avg, width="stretch")
 
     # Maximum Idleness
     df_max_all = []
@@ -116,7 +124,7 @@ with left:
             color="file",
             title="Maximum Idleness",
         )
-        st.plotly_chart(fig_max, width='stretch')
+        st.plotly_chart(fig_max, width="stretch")
 
 # Right column: coverage metrics
 with right:
@@ -154,7 +162,7 @@ with right:
             color="file",
             title="Total Coverage",
         )
-        st.plotly_chart(fig_coverage, width='stretch')
+        st.plotly_chart(fig_coverage, width="stretch")
 
     # Agents Work
     df_work_all = []
@@ -188,7 +196,7 @@ with right:
             color="file",
             title="Total Agents Work",
         )
-        st.plotly_chart(fig_work, width='stretch')
+        st.plotly_chart(fig_work, width="stretch")
 
 # Individual file details
 st.subheader("Individual File Details")
@@ -226,7 +234,7 @@ if selected_file:
                 color="agent",
                 title=f"Coverage by Agent - {selected_file}",
             )
-            st.plotly_chart(fig_agents, width='stretch')
+            st.plotly_chart(fig_agents, width="stretch")
 
     with right:
         if agentswork:
@@ -244,7 +252,7 @@ if selected_file:
                 color="agent",
                 title=f"Agents Work History - {selected_file}",
             )
-            st.plotly_chart(fig_agentswork, width='stretch')
+            st.plotly_chart(fig_agentswork, width="stretch")
 
 # Show raw JSON if needed
 with st.expander("Raw JSON"):
