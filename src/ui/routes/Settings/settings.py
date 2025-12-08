@@ -32,8 +32,7 @@ class SettingsPage(Page):
         # Data
         self._map_names: list[str] = []
         # Instance
-        self._agent_instance_selector: CycleSelector | None = None
-        self._event_instance_selector: CycleSelector | None = None
+        self._instance_selector: CycleSelector | None = None
 
     def on_enter(self, prev: Optional[str] = None) -> None:
         self._ready = False
@@ -99,20 +98,13 @@ class SettingsPage(Page):
         )
         
         # Agent instance selector
-        self._agent_instance_selector = CycleSelector(
+        self._instance_selector = CycleSelector(
             x0*11 + 220, y0, ctrl_w, ctrl_h,
-            options=sim_config.instance_manager.getAllAgentInstancesNameByMap(self._map_names[0]),
-            value=sim_config.event_instance_name,
-            on_change=self._on_agent_change,
+            options=sim_config.instance_manager.getAllInstancesNameByMap(self._map_names[0]),
+            value=sim_config.instance_name,
+            on_change=self._on_instance_change,
         )
         
-        # Event instance selector
-        self._event_instance_selector = CycleSelector(
-            x0*11 + 220, y0  + row_h, ctrl_w, ctrl_h,
-            options=sim_config.instance_manager.getAllEventInstancesName(),
-            value=sim_config.agent_instance_name,
-            on_change=self._on_event_change,
-        )
 
         # ACO specific controls for AntColony and AntColonyLecture
         aco = sim_config.algo_params.get("AntColony", {})
@@ -142,10 +134,8 @@ class SettingsPage(Page):
         if self._btn_back:
             self._btn_back.hover_property(event)
         # Forward to controls
-        if self._agent_instance_selector:
-            self._agent_instance_selector.handle_event(event)
-        if self._event_instance_selector:
-            self._event_instance_selector.handle_event(event)
+        if self._instance_selector:
+            self._instance_selector.handle_event(event)
         if self._algo_selector:
             self._algo_selector.handle_event(event)
         if self._map_selector:
@@ -181,8 +171,7 @@ class SettingsPage(Page):
             ("Croissance idleness (0-1)", y0 + 4 * row_h),
         ]
         labels_second_row =[
-            ("Instance agent", y0 ),
-            ("Instance event", y0 +row_h),
+            ("Instance", y0 ),
         ]
         for text, y in labels:
             surf = self.small.render(text, True, self.utils.BLACK)
@@ -202,10 +191,8 @@ class SettingsPage(Page):
             self._spawn_stepper.draw(screen)
         if self._iddleness_stepper:
             self._iddleness_stepper.draw(screen)
-        if self._agent_instance_selector:
-            self._agent_instance_selector.draw(screen)
-        if self._event_instance_selector:
-            self._event_instance_selector.draw(screen)
+        if self._instance_selector:
+            self._instance_selector.draw(screen)
 
         # Section spécifique ACO
         if self._is_aco():
@@ -230,15 +217,13 @@ class SettingsPage(Page):
         return sim_config.algorithm == "AntColony" or sim_config.algorithm == "AntColonyLecture"
 
     # Callbacks
-    def _on_agent_change(self, name: str) -> None:
-        sim_config.agent_instance_name = name
+    def _on_instance_change(self, name: str) -> None:
+        sim_config.instance_name = name
         if name != "no instance":
             num_agents= sim_config.instance_manager.getNumAgentFromInstance(name)
             self._agents_stepper.value=num_agents
             self._set_num_agents(num_agents)
     
-    def _on_event_change(self, name: str) -> None:
-        sim_config.event_instance_name = name
     
     def _on_algo_change(self, name: str) -> None:
         sim_config.algorithm = name
@@ -246,10 +231,10 @@ class SettingsPage(Page):
     def _on_map_change(self, name: str) -> None:
         sim_config.map_name = name
         
-        new_opts= sim_config.instance_manager.getAllAgentInstancesNameByMap(name)
-        self._agent_instance_selector.options= new_opts
-        self._agent_instance_selector.index=0
-        self._on_agent_change(new_opts[0])
+        new_opts= sim_config.instance_manager.getAllInstancesNameByMap(name)
+        self._instance_selector.options= new_opts
+        self._instance_selector.index=0
+        self._on_instance_change(new_opts[0])
 
     def _set_num_agents(self, n: int) -> None:
         sim_config.num_agents = max(1, int(n))

@@ -260,8 +260,8 @@ class Algorithm(ABC):
             List of (x, y) tuples representing initial positions of agents.
         """
         positions = []
-        if sim_config.agent_instance_name != "no instance":
-            positions=sim_config.instance_manager.getPositiontFromInstance(sim_config.agent_instance_name)
+        if sim_config.instance_name != "no instance":
+            positions=sim_config.instance_manager.getPositiontFromInstance(sim_config.instance_name)
         else:
             # Check if there are enough cells for all agents
             if self.num_agents > self.width * self.height:

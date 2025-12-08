@@ -18,8 +18,7 @@ class SimConfig:
     num_agents: int = 4
     spawn_prob: float = 0.05
     iddleness_growth: float = 0.05
-    agent_instance_name:str ="no instance"
-    event_instance_name:str ="no instance"
+    instance_name:str ="no instance"
     instance_manager= InstanceManager()
 
     # Paramètres spécifiques aux algorithmes

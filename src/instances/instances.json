@@ -1,5 +1,5 @@
 {
-    "agents": [
+    "instance": [
         {
             "name": "str",
             "id": 0,
@@ -22,7 +22,33 @@
                     3
                 ]
             ],
-            "map_name": "DUST2"
+            "map_name": "DUST2",
+            "event_type": "event_type"
+        },
+        {
+            "name": "coin",
+            "id": 1,
+            "nb_agent": 4,
+            "position": [
+                [
+                    5,
+                    5
+                ],
+                [
+                    5,
+                    4
+                ],
+                [
+                    4,
+                    4
+                ],
+                [
+                    4,
+                    5
+                ]
+            ],
+            "map_name": "DUST2",
+            "event_type": "event_type"
         },
         {
             "name": "str2",
@@ -46,12 +72,13 @@
                     3
                 ]
             ],
-            "map_name": "test"
+            "map_name": "test",
+            "event_type": "event_type"
         },
         {
             "name": "name",
             "id": 5,
-            "nb_agent": 10,
+            "nb_agent": 2,
             "position": [
                 [
                     4,
@@ -62,23 +89,7 @@
                     7
                 ]
             ],
-            "map_name": "map_name"
-        }
-    ],
-    "events": [
-        {
-            "name": "str2",
-            "id": 1,
-            "event_type": "test"
-        },
-        {
-            "name": "naaaaa",
-            "id": 2,
-            "event_type": "event_type"
-        },
-        {
-            "name": "name",
-            "id": 0,
+            "map_name": "test",
             "event_type": "event_type"
         }
     ]
