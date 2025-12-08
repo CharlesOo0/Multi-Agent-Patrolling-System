@@ -47,6 +47,8 @@ class StatsPage(Page):
 
     def on_enter(self, prev: Optional[str] = None) -> None:
         self._ready = False
+        self._export_to_json()
+        self._launch_streamlit()
 
     def on_exit(self, next: Optional[str] = None) -> None:
         pass
@@ -58,8 +60,10 @@ class StatsPage(Page):
         # Save exports into project `src/streamlit/saves` directory so
         # the Streamlit app can load them directly.
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-       
-        algo_name = str(self.results.get("algorithm_name", "unknown")).lower().replace(" ", "_")
+
+        algo_name = (
+            str(self.results.get("algorithm_name", "unknown")).lower().replace(" ", "_")
+        )
         filename = f"{algo_name}_{timestamp}_stats.json"
 
         export_data = {
@@ -83,7 +87,9 @@ class StatsPage(Page):
         }
 
         # Compute project root and target saves directory
-        proj = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+        proj = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
+        )
         saves_dir = os.path.join(proj, "src", "streamlit", "saves")
         try:
             os.makedirs(saves_dir, exist_ok=True)
@@ -107,7 +113,7 @@ class StatsPage(Page):
                 print("Failed to export statistics:", e)
 
     def _open_in_browser(self, url) -> None:
-        """ Open URL in Google Chrome if available, else default browser. """
+        """Open URL in Google Chrome if available, else default browser."""
         chrome_bins = []
         try:
             c = shutil.which("chrome")
@@ -148,7 +154,7 @@ class StatsPage(Page):
             except Exception:
                 pass
 
-    def _launch_streamlit(self, port = 8501) -> None:
+    def _launch_streamlit(self, port=8501) -> None:
         """Launch Streamlit UI:
 
         - Do nothing if a Streamlit process started by this instance is already running
@@ -164,7 +170,10 @@ class StatsPage(Page):
 
         # 1) If we already started a Streamlit process and it's still alive then reopening the UI
         try:
-            if getattr(self, "_streamlit_process", None) is not None and self._streamlit_process.poll() is None:
+            if (
+                getattr(self, "_streamlit_process", None) is not None
+                and self._streamlit_process.poll() is None
+            ):
                 print("Streamlit already running")
                 self._open_in_browser(url)
                 return
@@ -174,8 +183,12 @@ class StatsPage(Page):
         # 2) Locate the Streamlit script
         base = os.path.dirname(__file__)
         candidate_paths = [
-            os.path.abspath(os.path.join(base, "..", "..", "..", "streamlit", "stats.py")),
-            os.path.abspath(os.path.join(base, "..", "..", "..", "..", "streamlit", "stats.py")),
+            os.path.abspath(
+                os.path.join(base, "..", "..", "..", "streamlit", "stats.py")
+            ),
+            os.path.abspath(
+                os.path.join(base, "..", "..", "..", "..", "streamlit", "stats.py")
+            ),
         ]
 
         script: Optional[str] = None
@@ -189,7 +202,9 @@ class StatsPage(Page):
             return
 
         # 3) Prefer project venv's Python if available
-        proj = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "..", "..", ".."))
+        proj = os.path.abspath(
+            os.path.join(os.path.dirname(__file__), "..", "..", "..", "..")
+        )
         p_venv = os.path.join(proj, "venv", "Scripts", "python.exe")
         p_alt = os.path.join(proj, ".venv", "Scripts", "python.exe")
 
@@ -218,7 +233,9 @@ class StatsPage(Page):
             cfg_dir = os.path.join(os.path.expanduser("~"), ".streamlit")
             os.makedirs(cfg_dir, exist_ok=True)
 
-            with open(os.path.join(cfg_dir, "credentials.toml"), "w", encoding="utf-8") as f:
+            with open(
+                os.path.join(cfg_dir, "credentials.toml"), "w", encoding="utf-8"
+            ) as f:
                 f.write('email = ""\n')
 
             with open(os.path.join(cfg_dir, "config.toml"), "w", encoding="utf-8") as f:
@@ -239,7 +256,9 @@ class StatsPage(Page):
                     return False
 
         def kill_port(p: int) -> None:
-            out = subprocess.check_output(["netstat", "-ano"], encoding="utf-8", errors="ignore")
+            out = subprocess.check_output(
+                ["netstat", "-ano"], encoding="utf-8", errors="ignore"
+            )
             for line in out.splitlines():
                 if f":{p} " in line and "LISTENING" in line:
                     parts = line.split()
@@ -262,8 +281,10 @@ class StatsPage(Page):
             "streamlit",
             "run",
             script,
-            "--server.headless", "true",
-            "--server.port", str(port),
+            "--server.headless",
+            "true",
+            "--server.port",
+            str(port),
         ]
 
         try:
@@ -271,7 +292,7 @@ class StatsPage(Page):
                 cmd,
                 stdout=log,
                 stderr=log,
-                stdin=subprocess.PIPE,   # <<< changed from DEVNULL
+                stdin=subprocess.PIPE,  # <<< changed from DEVNULL
             )
         except Exception as e:
             print("failed to launch streamlit:", e)
@@ -313,16 +334,16 @@ class StatsPage(Page):
             self.utils.GRAY,
             self.utils.LIGHT_GRAY,
         )
-        self._btn_export = Button(
-            20 + 2 * (160 + gap),
-            20,
-            bw,
-            bh,
-            "Streamlit",
-            self.utils.GRAY,
-            self.utils.LIGHT_GRAY,
-        )
-        self._ready = True
+        # self._btn_export = Button(
+        #     20 + 2 * (160 + gap),
+        #     20,
+        #     bw,
+        #     bh,
+        #     "Streamlit",
+        #     self.utils.GRAY,
+        #     self.utils.LIGHT_GRAY,
+        # )
+        # self._ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
         for b in (self._btn_home, self._btn_rerun, self._btn_export):
@@ -334,8 +355,8 @@ class StatsPage(Page):
                 self.go_home()
             if self._btn_rerun and self._btn_rerun.is_clicked(pos, event):
                 self.go_sim()
-            if self._btn_export and self._btn_export.is_clicked(pos, event):
-                self._launch_streamlit()
+            # if self._btn_export and self._btn_export.is_clicked(pos, event):
+            #     self._launch_streamlit()
 
     def update(self, dt: float) -> None:
         pass
@@ -444,142 +465,184 @@ class StatsPage(Page):
             txt = self.small.render(line, True, self.utils.BLACK)
             screen.blit(txt, (50, info_y + i * 22))
 
-        # Graph 1 : average idleness across history
+        # Summarizing tab for the result data
         avg = self.results.get("average_idleness_history", []) or []
-        g1_rect = pygame.Rect(50, 250, (screen.get_width() - 100) / 2, 180)
-        self._draw_axes(screen, g1_rect)
-        self._plot_line(screen, g1_rect, avg)
-        # labels
-        x_lbl = self.small.render("Steps done", True, self.utils.BLACK)
-        screen.blit(
-            x_lbl,
-            (
-                g1_rect.left + g1_rect.width // 2 - x_lbl.get_width() // 2,
-                g1_rect.bottom - 18,
-            ),
-        )
-        y_lbl_surf = self.small.render("Value", True, self.utils.BLACK)
-        y_lbl = pygame.transform.rotate(y_lbl_surf, 90)
-        screen.blit(
-            y_lbl,
-            (
-                g1_rect.left + 8,
-                g1_rect.top + g1_rect.height // 2 - y_lbl.get_height() // 2,
-            ),
-        )
-        last_avg = f"{avg[-1]:.2f}" if avg else "n/a"
-        g1_label = self.small.render(
-            f"Average Idleness: {last_avg} points", True, self.utils.BLACK
-        )
-        screen.blit(g1_label, (g1_rect.left, g1_rect.top - 20))
-
-        # Graph 2: Max idlness in history
         max_hist = self.results.get("maximum_idleness_history", []) or []
-        g2_rect = pygame.Rect(
-            50 + (screen.get_width() - 100) / 2,
-            250,
-            (screen.get_width() - 100) / 2,
-            180,
-        )
-        self._draw_axes(screen, g2_rect)
-        # use a different color for the max line
-        self._plot_line(screen, g2_rect, max_hist, color=(220, 20, 60))
-        # labels
-        x_lbl2 = self.small.render("Steps done", True, self.utils.BLACK)
-        screen.blit(
-            x_lbl2,
-            (
-                g2_rect.left + g2_rect.width // 2 - x_lbl2.get_width() // 2,
-                g2_rect.bottom - 18,
-            ),
-        )
-        y_lbl2_surf = self.small.render("Value", True, self.utils.BLACK)
-        y_lbl2 = pygame.transform.rotate(y_lbl2_surf, 90)
-        screen.blit(
-            y_lbl2,
-            (
-                g2_rect.left + 8,
-                g2_rect.top + g2_rect.height // 2 - y_lbl2.get_height() // 2,
-            ),
-        )
-        last_max = f"{max_hist[-1]:.2f}" if max_hist else "n/a"
-        g2_label = self.small.render(
-            f"Max Idleness: {last_max} points", True, self.utils.BLACK
-        )
-        screen.blit(g2_label, (g2_rect.left, g2_rect.top - 20))
-
-        #Graph 3: total coverage in history
         total_cov = self.results.get("total_coverage_history", []) or []
-        g3_rect = pygame.Rect(
-            50, g2_rect.bottom + 50, (screen.get_width() - 100) / 2, 180
-        )
-        self._draw_axes(screen, g3_rect)
-        # use a different color for the total coverage line
-        self._plot_line(screen, g3_rect, total_cov, color=(220, 20, 60))
-        # labels
-        x_lbl3 = self.small.render("Steps done", True, self.utils.BLACK)
-        screen.blit(
-            x_lbl3,
-            (
-                g3_rect.left + g3_rect.width // 2 - x_lbl3.get_width() // 2,
-                g3_rect.bottom - 18,
-            ),
-        )
-        y_lbl3_surf = self.small.render("Coverage", True, self.utils.BLACK)
-        y_lbl3 = pygame.transform.rotate(y_lbl3_surf, 90)
-        screen.blit(
-            y_lbl3,
-            (
-                g3_rect.left + 8,
-                g3_rect.top + g3_rect.height // 2 - y_lbl3.get_height() // 2,
-            ),
-        )
-        last_total = f"{total_cov[-1]:.2f}" if total_cov else "n/a"
-        g3_label = self.small.render(
-            f"Total coverage: {last_total}", True, self.utils.BLACK
-        )
-        screen.blit(g3_label, (g3_rect.left, g3_rect.top - 20))
-
-        # Graph 4: Coverage per agent in history
         cov_hist = self.results.get("coverage_by_agent_history", []) or []
-        g4_rect = pygame.Rect(
-            50 + (screen.get_width() - 100) / 2,
-            g2_rect.bottom + 50,
-            (screen.get_width() - 100) / 2,
-            180,
-        )
-        g4_label = self.small.render("Coverage by agent", True, self.utils.BLACK)
-        screen.blit(g4_label, (g4_rect.left, g4_rect.top - 20))
-        self._draw_axes(screen, g4_rect)
-        # labels
-        x_lbl4 = self.small.render("Steps done", True, self.utils.BLACK)
-        screen.blit(
-            x_lbl4,
-            (
-                g4_rect.left + g4_rect.width // 2 - x_lbl4.get_width() // 2,
-                g4_rect.bottom - 18,
-            ),
-        )
-        y_lbl4_surf = self.small.render("Coverage", True, self.utils.BLACK)
-        y_lbl4 = pygame.transform.rotate(y_lbl4_surf, 90)
-        screen.blit(
-            y_lbl4,
-            (
-                g4_rect.left + 8,
-                g4_rect.top + g4_rect.height // 2 - y_lbl4.get_height() // 2,
-            ),
-        )
-        # Palette of colors to cycle through for each agent
-        palette = [
-            (30, 144, 255),  # dodger blue
-            (220, 20, 60),  # crimson
-            (34, 139, 34),  # forest green
-            (255, 140, 0),  # dark orange
-            (148, 0, 211),  # dark violet
-            (255, 105, 180),  # hot pink
-            (70, 130, 180),  # steel blue
+
+        table_y = 250
+        row_height = 24
+        col_width = 200
+
+        # Header of the tab
+        headers = [
+            "Étape",
+            "Moyenne d'oisiveté",
+            "Maximum d'oisiveté",
+            "Couverture totale",
         ]
-        for i, agent_hist in enumerate(cov_hist):
-            color = palette[i % len(palette)]
-            self._plot_line(screen, g4_rect, agent_hist or [], color=color)
-            # draw a small legend for each agent above the graph
+        header_x = [50, 250, 400, 550]
+
+        for i, header in enumerate(headers):
+            txt = self.small.render(header, True, self.utils.BLACK)
+            screen.blit(txt, (header_x[i], table_y))
+
+        # Données du tableau
+        max_steps = max(len(avg), len(max_hist), len(total_cov), len(cov_hist))
+        for step in range(max_steps):
+            table_y += row_height
+            step_value = step + 1
+            avg_value = f"{avg[step]:.2f}" if step < len(avg) else "n/a"
+            max_value = f"{max_hist[step]:.2f}" if step < len(max_hist) else "n/a"
+            total_value = f"{total_cov[step]:.2f}" if step < len(total_cov) else "n/a"
+
+            txt_step = self.small.render(str(step_value), True, self.utils.BLACK)
+            txt_avg = self.small.render(avg_value, True, self.utils.GRAY)
+            txt_max = self.small.render(max_value, True, self.utils.GRAY)
+            txt_total = self.small.render(total_value, True, self.utils.GRAY)
+
+            screen.blit(txt_step, (header_x[0], table_y))
+            screen.blit(txt_avg, (header_x[1], table_y))
+            screen.blit(txt_max, (header_x[2], table_y))
+            screen.blit(txt_total, (header_x[3], table_y))
+
+        # # Graphique 1: moyenne d'oisiveté dans le temps
+        # avg = self.results.get("average_idleness_history", []) or []
+        # g1_rect = pygame.Rect(50, 250, (screen.get_width() - 100) / 2, 180)
+        # self._draw_axes(screen, g1_rect)
+        # self._plot_line(screen, g1_rect, avg)
+        # # labels
+        # x_lbl = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        # screen.blit(
+        #     x_lbl,
+        #     (
+        #         g1_rect.left + g1_rect.width // 2 - x_lbl.get_width() // 2,
+        #         g1_rect.bottom - 18,
+        #     ),
+        # )
+        # y_lbl_surf = self.small.render("Valeur", True, self.utils.BLACK)
+        # y_lbl = pygame.transform.rotate(y_lbl_surf, 90)
+        # screen.blit(
+        #     y_lbl,
+        #     (
+        #         g1_rect.left + 8,
+        #         g1_rect.top + g1_rect.height // 2 - y_lbl.get_height() // 2,
+        #     ),
+        # )
+        # last_avg = f"{avg[-1]:.2f}" if avg else "n/a"
+        # g1_label = self.small.render(
+        #     f"Moyenne d'oisiveté: {last_avg} points", True, self.utils.BLACK
+        # )
+        # screen.blit(g1_label, (g1_rect.left, g1_rect.top - 20))
+
+        # # Graphique 2: maximum d'oisiveté dans le temps
+        # max_hist = self.results.get("maximum_idleness_history", []) or []
+        # g2_rect = pygame.Rect(
+        #     50 + (screen.get_width() - 100) / 2,
+        #     250,
+        #     (screen.get_width() - 100) / 2,
+        #     180,
+        # )
+        # self._draw_axes(screen, g2_rect)
+        # # use a different color for the max line
+        # self._plot_line(screen, g2_rect, max_hist, color=(220, 20, 60))
+        # # labels
+        # x_lbl2 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        # screen.blit(
+        #     x_lbl2,
+        #     (
+        #         g2_rect.left + g2_rect.width // 2 - x_lbl2.get_width() // 2,
+        #         g2_rect.bottom - 18,
+        #     ),
+        # )
+        # y_lbl2_surf = self.small.render("Valeur", True, self.utils.BLACK)
+        # y_lbl2 = pygame.transform.rotate(y_lbl2_surf, 90)
+        # screen.blit(
+        #     y_lbl2,
+        #     (
+        #         g2_rect.left + 8,
+        #         g2_rect.top + g2_rect.height // 2 - y_lbl2.get_height() // 2,
+        #     ),
+        # )
+        # last_max = f"{max_hist[-1]:.2f}" if max_hist else "n/a"
+        # g2_label = self.small.render(
+        #     f"Maximum d'oisiveté: {last_max} points", True, self.utils.BLACK
+        # )
+        # screen.blit(g2_label, (g2_rect.left, g2_rect.top - 20))
+
+        # # Graphique 3: couverture totale dans le temps
+        # total_cov = self.results.get("total_coverage_history", []) or []
+        # g3_rect = pygame.Rect(
+        #     50, g2_rect.bottom + 50, (screen.get_width() - 100) / 2, 180
+        # )
+        # self._draw_axes(screen, g3_rect)
+        # # use a different color for the total coverage line
+        # self._plot_line(screen, g3_rect, total_cov, color=(220, 20, 60))
+        # # labels
+        # x_lbl3 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        # screen.blit(
+        #     x_lbl3,
+        #     (
+        #         g3_rect.left + g3_rect.width // 2 - x_lbl3.get_width() // 2,
+        #         g3_rect.bottom - 18,
+        #     ),
+        # )
+        # y_lbl3_surf = self.small.render("Couverture", True, self.utils.BLACK)
+        # y_lbl3 = pygame.transform.rotate(y_lbl3_surf, 90)
+        # screen.blit(
+        #     y_lbl3,
+        #     (
+        #         g3_rect.left + 8,
+        #         g3_rect.top + g3_rect.height // 2 - y_lbl3.get_height() // 2,
+        #     ),
+        # )
+        # last_total = f"{total_cov[-1]:.2f}" if total_cov else "n/a"
+        # g3_label = self.small.render(
+        #     f"Couverture totale: {last_total}", True, self.utils.BLACK
+        # )
+        # screen.blit(g3_label, (g3_rect.left, g3_rect.top - 20))
+
+        # # Graphique 4: Coverage par agent
+        # cov_hist = self.results.get("coverage_by_agent_history", []) or []
+        # g4_rect = pygame.Rect(
+        #     50 + (screen.get_width() - 100) / 2,
+        #     g2_rect.bottom + 50,
+        #     (screen.get_width() - 100) / 2,
+        #     180,
+        # )
+        # g4_label = self.small.render("Couverture par agent", True, self.utils.BLACK)
+        # screen.blit(g4_label, (g4_rect.left, g4_rect.top - 20))
+        # self._draw_axes(screen, g4_rect)
+        # # labels
+        # x_lbl4 = self.small.render("Pas exécutés", True, self.utils.BLACK)
+        # screen.blit(
+        #     x_lbl4,
+        #     (
+        #         g4_rect.left + g4_rect.width // 2 - x_lbl4.get_width() // 2,
+        #         g4_rect.bottom - 18,
+        #     ),
+        # )
+        # y_lbl4_surf = self.small.render("Couverture", True, self.utils.BLACK)
+        # y_lbl4 = pygame.transform.rotate(y_lbl4_surf, 90)
+        # screen.blit(
+        #     y_lbl4,
+        #     (
+        #         g4_rect.left + 8,
+        #         g4_rect.top + g4_rect.height // 2 - y_lbl4.get_height() // 2,
+        #     ),
+        # )
+        # # Palette of colors to cycle through for each agent
+        # palette = [
+        #     (30, 144, 255),  # dodger blue
+        #     (220, 20, 60),  # crimson
+        #     (34, 139, 34),  # forest green
+        #     (255, 140, 0),  # dark orange
+        #     (148, 0, 211),  # dark violet
+        #     (255, 105, 180),  # hot pink
+        #     (70, 130, 180),  # steel blue
+        # ]
+        # for i, agent_hist in enumerate(cov_hist):
+        #     color = palette[i % len(palette)]
+        #     self._plot_line(screen, g4_rect, agent_hist or [], color=color)
+        #     # draw a small legend for each agent above the graph
