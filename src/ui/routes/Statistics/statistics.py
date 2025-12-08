@@ -41,7 +41,6 @@ class StatsPage(Page):
         self._streamlit_process = None
         self._ready = False
         self.results: Dict[str, Any] | None = None
-        self._export_to_json()
 
     def set_results(self, results: Dict[str, Any]) -> None:
         self.results = results
@@ -160,6 +159,8 @@ class StatsPage(Page):
         - Additionally: send empty input to stdin to bypass any email prompt
         """
         url = f"http://localhost:{port}"
+
+        self._export_to_json()
 
         # 1) If we already started a Streamlit process and it's still alive then reopening the UI
         try:
