@@ -26,11 +26,15 @@ class SimConfig:
                 "evaporation_rate": 0.10,
                 "alpha": 1.0,
                 "beta": 2.0,
+                "exploration_rate": 0.15,
+                "tabu_length": 15,
             },
             "AntColonyLecture": {
                 "evaporation_rate": 0.10,
                 "alpha": 1.0,
                 "beta": 2.0,
+                "exploration_rate": 0.15,
+                "tabu_length": 15,
             },
         }
     )

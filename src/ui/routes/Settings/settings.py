@@ -29,6 +29,8 @@ class SettingsPage(Page):
         self._aco_evap: Stepper | None = None
         self._aco_alpha: Stepper | None = None
         self._aco_beta: Stepper | None = None
+        self._aco_exploration_rate: Stepper | None = None
+        self._aco_tabu_length: Stepper | None = None
         # Data
         self._map_names: list[str] = []
 
@@ -113,6 +115,16 @@ class SettingsPage(Page):
             value=float(aco.get("beta", 2.0)), step=0.1, min_value=0.0, max_value=5.0, fmt="{:.1f}",
             on_change=lambda v: self._set_aco_param("beta", float(v)),
         )
+        self._aco_exploration_rate = Stepper(
+            x0 + 220, y0 + 8 * row_h, ctrl_w, ctrl_h,
+            value=float(aco.get("exploration_rate", 0.15)), step=0.01, min_value=0.0, max_value=1.0, fmt="{:.2f}",
+            on_change=lambda v: self._set_aco_param("exploration_rate", float(v)),
+        )
+        self._aco_tabu_length = Stepper(
+            x0 + 220, y0 + 9 * row_h, ctrl_w, ctrl_h,
+            value=float(aco.get("tabu_length", 15)), step=1.0, min_value=1.0, max_value=100.0, fmt="{:.0f}",
+            on_change=lambda v: self._set_aco_param("tabu_length", int(v)),
+        )
         self._ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -137,6 +149,8 @@ class SettingsPage(Page):
             self._aco_evap and self._aco_evap.handle_event(event)
             self._aco_alpha and self._aco_alpha.handle_event(event)
             self._aco_beta and self._aco_beta.handle_event(event)
+            self._aco_exploration_rate and self._aco_exploration_rate.handle_event(event)
+            self._aco_tabu_length and self._aco_tabu_length.handle_event(event)
 
     def update(self, dt: float) -> None:
         pass
@@ -182,6 +196,10 @@ class SettingsPage(Page):
             self._aco_evap and self._aco_evap.draw(screen)
             self._aco_alpha and self._aco_alpha.draw(screen)
             self._aco_beta and self._aco_beta.draw(screen)
+            self._draw_label(screen, "Exploration Rate", x0, y0 + 8 * row_h)
+            self._aco_exploration_rate and self._aco_exploration_rate.draw(screen)
+            self._draw_label(screen, "Tabu Length", x0, y0 + 9 * row_h)
+            self._aco_tabu_length and self._aco_tabu_length.draw(screen)
 
         if self._btn_back:
             self._btn_back.draw(screen)

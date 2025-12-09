@@ -13,15 +13,14 @@ class AntColonyLecture(Algorithm):
     responsible for resolving collisions and constraints.
     """
 
-    TABU_LENGTH = 15
-    EXPLORATION_RATE = 0.15
-
     def __init__(
         self,
         map: np.ndarray,
         num_agents: int,
         alpha: float = 1,
         beta: float = 2,
+        exploration_rate: float = 0.15,
+        tabu_length: int = 15,
         rho: float = 0.1,
         Q: float = 1.0,
         **kwargs,
@@ -29,6 +28,8 @@ class AntColonyLecture(Algorithm):
         super().__init__(map, num_agents, **kwargs)
         self.alpha = alpha
         self.beta = beta
+        self.exploration_rate = exploration_rate
+        self.tabu_length = tabu_length
         self.rho = rho
         self.Q = Q
 
@@ -100,7 +101,7 @@ class AntColonyLecture(Algorithm):
         for i, pos in enumerate(self.agents):
 
             # Random exploration step
-            if random.random() < self.EXPLORATION_RATE:
+            if random.random() < self.exploration_rate:
                 neighbors = [
                     (pos[0] + dx, pos[1] + dy)
                     for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]
@@ -114,7 +115,7 @@ class AntColonyLecture(Algorithm):
 
             # Update tabu list
             self.tabu[i].append(new_pos)
-            if len(self.tabu[i]) > self.TABU_LENGTH:
+            if len(self.tabu[i]) > self.tabu_length:
                 self.tabu[i].pop(0)
 
             new_positions.append(new_pos)
