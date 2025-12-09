@@ -34,7 +34,10 @@ class Algorithm(ABC):
 
         # Simulation speed and events configuration
         self.base_event_spawn_prob: float = float(kwargs.get("event_spawn_prob", 1))
-        self.idleness_growth: float = float(kwargs.get("iddleness_growth", 0.01))
+        # idleness growth rate (per step). Default to global sim_config value
+        self.idleness_growth: float = float(
+            kwargs.get("iddleness_growth", sim_config.iddleness_growth)
+        )
 
         # Events manager (CS:GO-like) to influence idleness each step
         # Scale spawn probability inverse to simulation speed so real-time rate stays stable
@@ -265,7 +268,11 @@ class Algorithm(ABC):
         """
         positions = []
         if sim_config.instance_name != "no instance":
-            positions=sim_config.instance_manager.getPositiontFromInstance(sim_config.instance_name)
+            inst = sim_config.instance_manager.get(sim_config.instance_name)
+            if inst is not None:
+                positions = inst.position.copy()
+            else:
+                positions = []
         else:
             # Check if there are enough cells for all agents
             if self.num_agents > self.width * self.height:

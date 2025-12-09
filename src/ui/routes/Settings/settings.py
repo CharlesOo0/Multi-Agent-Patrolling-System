@@ -102,7 +102,7 @@ class SettingsPage(Page):
         # Agent instance selector
         self._instance_selector = CycleSelector(
             x0*11 + 220, y0, ctrl_w, ctrl_h,
-            options=sim_config.instance_manager.getAllInstancesNameByMap(self._map_names[0]),
+            options=sim_config.instance_manager.names(self._map_names[0]),
             value=sim_config.instance_name,
             on_change=self._on_instance_change,
         )
@@ -238,9 +238,16 @@ class SettingsPage(Page):
     def _on_instance_change(self, name: str) -> None:
         sim_config.instance_name = name
         if name != "no instance":
-            num_agents= sim_config.instance_manager.getNumAgentFromInstance(name)
-            self._agents_stepper.value=num_agents
+            inst = sim_config.instance_manager.get(name)
+            num_agents = inst.nb_agent if inst is not None else 1
+            self._agents_stepper.value = num_agents
             self._set_num_agents(num_agents)
+            # Apply instance-specific idleness growth rate to config and UI
+            if inst is not None:
+                sim_config.iddleness_growth = float(getattr(inst, "idleness_growth", sim_config.iddleness_growth))
+                # update UI control if exists
+                if self._iddleness_stepper:
+                    self._iddleness_stepper.value = float(sim_config.iddleness_growth)
     
     
     def _on_algo_change(self, name: str) -> None:
@@ -249,7 +256,7 @@ class SettingsPage(Page):
     def _on_map_change(self, name: str) -> None:
         sim_config.map_name = name
         
-        new_opts= sim_config.instance_manager.getAllInstancesNameByMap(name)
+        new_opts = sim_config.instance_manager.names(name)
         self._instance_selector.options= new_opts
         self._instance_selector.index=0
         self._on_instance_change(new_opts[0])
