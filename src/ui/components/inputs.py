@@ -7,7 +7,7 @@ from .button import Button
 
 
 class Stepper:
-    """Contrôle +/- pour ajuster une valeur numérique (int ou float)."""
+    """Plus/minus control to adjust a numeric value (int or float)."""
 
     def __init__(
         self,
@@ -64,7 +64,7 @@ class Stepper:
                 self._set_value(self.value + self.step)
 
     def draw(self, surface: pygame.Surface) -> None:
-        # Cadre
+        # Frame
         if self.disabled:
             bg = self.utils.LIGHT_GRAY
             border_color = (160, 160, 160)
@@ -73,10 +73,10 @@ class Stepper:
             border_color = self.utils.BLACK
         pygame.draw.rect(surface, bg, self.rect, border_radius=6)
         pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=6)
-        # Boutons (render but they won't respond when disabled)
+        # Buttons (rendered but won't respond when disabled)
         self.btn_dec.draw(surface)
         self.btn_inc.draw(surface)
-        # Valeur
+        # Value
         text_color = (120, 120, 120) if self.disabled else self.utils.BLACK
         text = self.font.render(self.fmt.format(self.value), True, text_color)
         tx = self.rect.centerx - text.get_width() // 2
@@ -89,7 +89,7 @@ class Stepper:
 
 
 class CycleSelector:
-    """Sélecteur qui fait défiler une liste de valeurs (ex: algorithme, map)."""
+    """Selector that cycles through a list of values (e.g., algorithm, map)."""
 
     def __init__(
         self,
@@ -134,13 +134,13 @@ class CycleSelector:
                 self._notify()
 
     def draw(self, surface: pygame.Surface) -> None:
-        # Cadre
+        # Frame
         pygame.draw.rect(surface, self.utils.LIGHT_GRAY, self.rect, border_radius=6)
         pygame.draw.rect(surface, self.utils.BLACK, self.rect, 2, border_radius=6)
-        # Boutons
+        # Buttons
         self.btn_prev.draw(surface)
         self.btn_next.draw(surface)
-        # Valeur
+        # Value
         text = self.font.render(self.value, True, self.utils.BLACK)
         tx = self.rect.centerx - text.get_width() // 2
         ty = self.rect.centery - text.get_height() // 2

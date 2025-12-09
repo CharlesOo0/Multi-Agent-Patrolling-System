@@ -41,7 +41,7 @@ class SettingsPage(Page):
         # Instance
         self._instance_selector: CycleSelector | None = None
 
-        # Layout info (pour garder la même géométrie entre _ensure_ui et render)
+        # Layout info
         self._layout: dict | None = None
 
         # Scrolling state
@@ -77,9 +77,9 @@ class SettingsPage(Page):
         ctrl_w = 360
         ctrl_h = 40
         x_left = x0 + 220
-        section_gap = 40  # espace entre Environment et Alg. Parameters
+        section_gap = 40
 
-        # ------- ENVIRONMENT CONTROLS (colonne verticale) -------
+        # ------- ENVIRONMENT CONTROLS (vertical column) -------
         y = y0
 
         # Algorithm selector
@@ -168,10 +168,9 @@ class SettingsPage(Page):
         )
         y += row_h
 
-        # Point de départ de la section Alg. Parameters
         alg_y0 = y + section_gap
 
-        # ------- ALGO-SPECIFIC CONTROLS (ACO) EN DESSOUS, MÊME COLONNE -------
+        # ------- ALGO-SPECIFIC CONTROLS (ACO) -------
         aco = sim_config.algo_params.get("AntColony", {})
         if not aco:
             aco = sim_config.algo_params.get("AntColonyLecture", {})
@@ -222,7 +221,7 @@ class SettingsPage(Page):
             on_change=lambda v: self._set_aco_param("tabu_length", int(v)),
         )
 
-        # Sauvegarde layout pour le render
+        # Save layout info for render
         self._layout = {
             "x0": x0,
             "y0": y0,
@@ -362,7 +361,7 @@ class SettingsPage(Page):
         title = self.font.render("Settings", True, self.utils.BLACK)
         content_surf.blit(title, (40, 90))
 
-        # Labels de la section Environment
+        # Labels for the section environment
         default_labels = [
             "Algorithm",
             "Map",
@@ -401,7 +400,7 @@ class SettingsPage(Page):
         if self._time_limit_stepper:
             self._time_limit_stepper.draw(content_surf)
 
-        # ------- ALGO PARAMETERS (section sous Environment) -------
+        # ------- ALGO PARAMETERS (section under Environment) -------
         # Algo parameters: always show ACO controls when ACO selected
         if self._is_aco():
             # ACO : labels placed in the left column (x0) to avoid overlap with controls
@@ -424,7 +423,7 @@ class SettingsPage(Page):
                 no_txt = self.small.render("No alg. parameters available", True, self.utils.BLACK)
                 content_surf.blit(no_txt, (x_left, alg_y0))
             else:
-                # Générique : simple liste label + valeur
+                # Generic: simple label/value list
                 i = 0
                 for key, val in algo_params.items():
                     label = f"{key}"
