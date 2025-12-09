@@ -33,6 +33,8 @@ class SettingsPage(Page):
         self._aco_tabu_length: Stepper | None = None
         # Data
         self._map_names: list[str] = []
+        # Instance
+        self._instance_selector: CycleSelector | None = None
 
     def on_enter(self, prev: Optional[str] = None) -> None:
         self._ready = False
@@ -96,6 +98,15 @@ class SettingsPage(Page):
             value=float(sim_config.iddleness_growth), step=0.001, min_value=0.0, max_value=1.0, fmt="{:.3f}",
             on_change=self._set_iddleness_growth,
         )
+        
+        # Agent instance selector
+        self._instance_selector = CycleSelector(
+            x0*11 + 220, y0, ctrl_w, ctrl_h,
+            options=sim_config.instance_manager.getAllInstancesNameByMap(self._map_names[0]),
+            value=sim_config.instance_name,
+            on_change=self._on_instance_change,
+        )
+        
 
         # ACO specific controls for AntColony and AntColonyLecture
         aco = sim_config.algo_params.get("AntColony", {})
@@ -135,6 +146,8 @@ class SettingsPage(Page):
         if self._btn_back:
             self._btn_back.hover_property(event)
         # Forward to controls
+        if self._instance_selector:
+            self._instance_selector.handle_event(event)
         if self._algo_selector:
             self._algo_selector.handle_event(event)
         if self._map_selector:
@@ -171,9 +184,16 @@ class SettingsPage(Page):
             ("Events spawn rate (0-1)", y0 + 3 * row_h),
             ("Idleness growth rate (0-1)", y0 + 4 * row_h),
         ]
+        labels_second_row =[
+            ("Instance", y0 ),
+        ]
         for text, y in labels:
             surf = self.small.render(text, True, self.utils.BLACK)
             screen.blit(surf, (x0, y + 8))
+            
+        for text, y in labels_second_row:
+            surf = self.small.render(text, True, self.utils.BLACK)
+            screen.blit(surf, (x0*11, y + 8))
 
         if self._algo_selector:
             self._algo_selector.draw(screen)
@@ -185,6 +205,8 @@ class SettingsPage(Page):
             self._spawn_stepper.draw(screen)
         if self._iddleness_stepper:
             self._iddleness_stepper.draw(screen)
+        if self._instance_selector:
+            self._instance_selector.draw(screen)
 
         # Section spécifique ACO
         if self._is_aco():
@@ -213,11 +235,24 @@ class SettingsPage(Page):
         return sim_config.algorithm == "AntColony" or sim_config.algorithm == "AntColonyLecture"
 
     # Callbacks
+    def _on_instance_change(self, name: str) -> None:
+        sim_config.instance_name = name
+        if name != "no instance":
+            num_agents= sim_config.instance_manager.getNumAgentFromInstance(name)
+            self._agents_stepper.value=num_agents
+            self._set_num_agents(num_agents)
+    
+    
     def _on_algo_change(self, name: str) -> None:
         sim_config.algorithm = sim_config.display_to_internal(name)
 
     def _on_map_change(self, name: str) -> None:
         sim_config.map_name = name
+        
+        new_opts= sim_config.instance_manager.getAllInstancesNameByMap(name)
+        self._instance_selector.options= new_opts
+        self._instance_selector.index=0
+        self._on_instance_change(new_opts[0])
 
     def _set_num_agents(self, n: int) -> None:
         sim_config.num_agents = max(1, int(n))

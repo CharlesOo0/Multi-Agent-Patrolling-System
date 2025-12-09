@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from typing import Dict, Any
+from instances.instances import InstanceManager
 
 
 @dataclass
@@ -17,6 +18,8 @@ class SimConfig:
     num_agents: int = 4
     spawn_prob: float = 0.05
     iddleness_growth: float = 0.05
+    instance_name:str ="no instance"
+    instance_manager= InstanceManager()
 
     # Paramètres spécifiques aux algorithmes
     algo_params: Dict[str, Any] = field(
