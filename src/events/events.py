@@ -71,10 +71,10 @@ class EventManager:
         return random.choice(free_cells)
     
     def _is_in_bounds(self, pos: Tuple[int, int], map_arr: np.ndarray) -> bool:
-        """Check if a position is within the bounds of the map array."""
+        """Check if a position is within the bounds of the map array and is a free cell."""
         x, y = pos
         xs, ys = map_arr.shape
-        return 0 <= x < xs and 0 <= y < ys
+        return 0 <= x < xs and 0 <= y < ys and map_arr[x, y] == 0
 
     def maybe_spawn_event(self, map_arr: np.ndarray, step: int) -> Optional[Event]:
         """Stochastically spawn a new event on a random free cell. Or follow a scenario
@@ -123,8 +123,8 @@ class EventManager:
             event_template = random.choice(self.events)
             event = copy.deepcopy(event_template)
             event.position = pos
-            self.active.append(event)
-            
+        
+        self.active.append(event)  
         return event
 
     def apply_events(self, idleness: np.ndarray) -> None:

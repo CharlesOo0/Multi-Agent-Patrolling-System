@@ -253,7 +253,10 @@ class Algorithm(ABC):
         self.idleness = np.zeros((self.width, self.height))
         self.agents = self._initialize_agent_positions()
         # Recreate EventManager with spawn prob matching current simulation speed
-        self.events = EventManager(spawn_prob=self.base_event_spawn_prob)
+        self.events = EventManager(
+            spawn_prob=self.base_event_spawn_prob, 
+            events_scenario=sim_config.instance_manager.get(sim_config.instance_name).event_appearance_list if sim_config.instance_name != "no instance" else None
+        )
         self.step_count = 0
         self.total_coverage_history = []
         self.coverage_by_agent_history = [[] for _ in range(self.num_agents)]
