@@ -8,7 +8,7 @@ from ui import HomePage, SimPage, SettingsPage, StatsPage,MapEditorPage
 def run_with_router():
     pygame.init()
     screen = pygame.display.set_mode((1280, 800), pygame.RESIZABLE)
-    pygame.display.set_caption("AI50 - Multipage Demo")
+    pygame.display.set_caption("AI50 - Multi-agents patrolling simulation")
     clock = pygame.time.Clock()
 
     router = Router(initial="home")
