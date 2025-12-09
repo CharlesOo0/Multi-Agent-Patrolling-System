@@ -7,10 +7,10 @@ from typing import List, Tuple
 class AntColonyLecture(Algorithm):
     """Simplified Ant Colony Optimization for multi-agent patrolling.
 
-    In this corrected version, agents no longer avoid walls, limits, or
-    other agents when computing their movement. They may propose invalid
-    positions and the environment (run_step from the parent class) is
-    responsible for resolving collisions and constraints.
+    Agents move stochastically according to a combination of pheromone
+    intensity and a heuristic visibility (here: cell idleness). A small
+    exploration probability forces occasional random moves. Pheromones
+    evaporate and are reinforced at visited cells.
     """
 
     def __init__(
@@ -44,7 +44,7 @@ class AntColonyLecture(Algorithm):
 
         Handles out-of-bound indices by returning a neutral constant.
         """
-        if self.in_bounds(x, y):
+        if self.in_bounds(x, y) and self.idleness[x, y] == 0:
             return self.idleness[x, y] + 1
         return 1.0  # Neutral heuristic if out of bounds
 
@@ -53,8 +53,8 @@ class AntColonyLecture(Algorithm):
     ) -> Tuple[List[Tuple[int, int]], List[float]]:
         """Return neighbor list and corresponding transition probabilities.
 
-        This version no longer filters walls, agents, or map boundaries.
-        All four cardinal directions are always allowed.
+        Probabilities are proportional to (pheromone^alpha) * (visibility^beta).
+        Short-term tabu entries are excluded when possible.
         """
 
         x, y = pos
@@ -93,7 +93,9 @@ class AntColonyLecture(Algorithm):
     def compute_move_agents(self) -> List[Tuple[int, int]]:
         """Propose moves for each agent.
 
-        This corrected version does NOT check walls, map limits, or collisions.
+        This method mirrors the name and behavior expected by the other
+        algorithms in the codebase: it returns a list of proposed new
+        positions (one per agent) and does not itself apply side-effects.
         """
 
         new_positions: List[Tuple[int, int]] = []
