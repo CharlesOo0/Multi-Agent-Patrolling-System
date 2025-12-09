@@ -7,7 +7,7 @@ from instances.instances import InstanceManager
 
 @dataclass
 class SimConfig:
-    """Global simulation configuration accessible par les pages.
+    """Global simulation configuration accessible from the UI pages.
 
     Note: This config is read by `SimPage.on_enter` when starting the simulation.
     Modify it from the Settings page.
@@ -18,10 +18,12 @@ class SimConfig:
     num_agents: int = 4
     spawn_prob: float = 0.05
     iddleness_growth: float = 0.05
-    instance_name:str ="no instance"
-    instance_manager= InstanceManager()
+    # Time limit in seconds for the simulation; 0 means no automatic stop
+    time_limit: float = 0.0
+    instance_name: str = "no instance"
+    instance_manager: InstanceManager = InstanceManager()
 
-    # Paramètres spécifiques aux algorithmes
+    # Algorithm-specific parameters
     algo_params: Dict[str, Any] = field(
         default_factory=lambda: {
             "Heuristic": {},
@@ -42,7 +44,7 @@ class SimConfig:
         }
     )
 
-    # Mapping interne -> nom affiché (façade) pour l'UI
+    # Internal -> display name mapping (UI facade)
     algo_display_map: Dict[str, str] = field(
         default_factory=lambda: {
             "Heuristic": "Heuristic",
@@ -51,7 +53,7 @@ class SimConfig:
         }
     )
 
-    # Ordre d'affichage des algorithmes
+    # Display order for algorithms
     algo_order: list[str] = field(default_factory=lambda: ["Heuristic", "AntColony", "AntColonyLecture"])
 
     def internal_to_display(self, internal: str) -> str:

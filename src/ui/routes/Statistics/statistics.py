@@ -436,7 +436,7 @@ class StatsPage(Page):
         title = self.font.render("Simulation Statistic", True, self.utils.BLACK)
         screen.blit(title, (screen.get_width() // 2 - title.get_width() // 2, 20))
 
-        # Boutons
+        # Buttons
         if self._btn_home:
             self._btn_home.draw(screen)
         if self._btn_rerun:
@@ -449,7 +449,7 @@ class StatsPage(Page):
             screen.blit(msg, (50, 100))
             return
 
-        # Informations générales
+        # General information
         algo = str(self.results.get("algorithm_name", "?"))
         steps = int(self.results.get("steps", 0))
         events = int(self.results.get("event_count", 0))

@@ -6,19 +6,7 @@ from dataclasses import dataclass
 from typing import List, Tuple, Optional, Dict
 
 import numpy as np
-
-
-class EventType(enum.Enum):
-    """Types of CS:GO-like events that can influence idleness.
-
-    - BOMB_PLANTED: Increase urgency in a local area (idleness drops strongly).
-    - ALLY_DOWN: Increase urgency moderately near the incident.
-    - ENEMY_DOWN: Slightly reduce urgency (idleness) around the event.
-    """
-
-    BOMB_PLANTED = "bomb_planted"
-    ALLY_DOWN = "ally_down"
-    ENEMY_DOWN = "enemy_down"
+import copy
 
 
 @dataclass
@@ -26,14 +14,13 @@ class Event:
     """An event occurring at a free cell location that affects idleness.
 
     Attributes:
-        type: The type of the event.
+        name: Name of the event type.
         position: (x, y) location on the grid where event occurs.
         radius: Manhattan radius of influence for this event.
         magnitude: A signed value to add to idleness (negative lowers idleness).
         ttl: Number of steps the event remains active (>=1). Each step decrements.
     """
-
-    type: EventType
+    name: str
     position: Tuple[int, int]
     radius: int
     magnitude: float
@@ -47,6 +34,11 @@ class Event:
         """Decrease event TTL by one step."""
         self.ttl -= 1
 
+DEFAULT_EVENTS_CONFIG: List[Event] = [
+    Event(name="Bomb exploded", position=(0, 0), radius=3, magnitude=-2.0, ttl=5),
+    Event(name="Ennemy spotted", position=(0, 0), radius=5, magnitude=1.5, ttl=10),
+    Event(name="Ally down", position=(0, 0), radius=4, magnitude=2.0, ttl=8),
+]
 
 class EventManager:
     """Generate and manage random events on free cells and apply effects.
@@ -57,18 +49,18 @@ class EventManager:
         - Events have limited TTL and will be removed when expired.
     """
 
-    def __init__(self,
-                 spawn_prob: float = 0.05,
-                 bomb_cfg: Optional[Dict] = None,
-                 ally_cfg: Optional[Dict] = None,
-                 enemy_cfg: Optional[Dict] = None) -> None:
+    def __init__(
+            self,
+            spawn_prob: float = 0.05,
+            events_config: Optional[List[Event]] = None,
+            events_scenario: Optional[Dict[int, Dict]] = None,           
+        ) -> None:
         print(f"spawn_prob={spawn_prob}")
         self.spawn_prob = spawn_prob
         self.active: List[Event] = []
-        # Default configurations per event type
-        self.bomb_cfg = bomb_cfg or {"radius": 4, "magnitude": 5.0, "ttl": 10}
-        self.ally_cfg = ally_cfg or {"radius": 3, "magnitude": 3.0, "ttl": 6}
-        self.enemy_cfg = enemy_cfg or {"radius": 2, "magnitude": -1.5, "ttl": 4}
+        # Default configurations per event type (use a list copy)
+        self.events = events_config if events_config is not None else list(DEFAULT_EVENTS_CONFIG)
+        self.events_scenario = events_scenario if events_scenario else None
 
     def _random_free_cell(self, map_arr: np.ndarray) -> Optional[Tuple[int, int]]:
         """Return a random free-cell coordinate (x, y), or None if none exist."""
@@ -77,47 +69,63 @@ class EventManager:
         if not free_cells:
             return None
         return random.choice(free_cells)
+    
+    def _is_in_bounds(self, pos: Tuple[int, int], map_arr: np.ndarray) -> bool:
+        """Check if a position is within the bounds of the map array and is a free cell."""
+        x, y = pos
+        xs, ys = map_arr.shape
+        return 0 <= x < xs and 0 <= y < ys and map_arr[x, y] == 0
 
-    def maybe_spawn_event(self, map_arr: np.ndarray) -> Optional[Event]:
-        """Stochastically spawn a new event on a random free cell.
+    def maybe_spawn_event(self, map_arr: np.ndarray, step: int) -> Optional[Event]:
+        """Stochastically spawn a new event on a random free cell. Or follow a scenario
 
         Args:
             map_arr: 2D numpy map where 0=free and 1=obstacle.
+            step: Current simulation step for scenario-based spawning.
 
         Returns:
             The created Event or None if no event spawned.
         """
-        r = random.random()
-        print(f"random={r} spawn_prob={self.spawn_prob}")
-        if  r > self.spawn_prob:
-            return None
+        if self.events_scenario is not None:
+            # If scenario provided but no event scheduled for this step, do nothing
+            if str(step) not in self.events_scenario.keys():
+                print(f"No event scheduled for step {step}.")
+                return None
 
-        pos = self._random_free_cell(map_arr)
-        if pos is None:
-            return None
+            event_info = self.events_scenario.get(str(step), None)
+            if event_info is None:
+                print(f"Error: Missing event info for step {step} in scenario.")
+                return None
 
-        etype = random.choices(
-            [EventType.BOMB_PLANTED, EventType.ALLY_DOWN, EventType.ENEMY_DOWN],
-            weights=[0.2, 0.4, 0.4],
-            k=1,
-        )[0]
+            if not self._is_in_bounds(event_info.get("position", (-1, -1)), map_arr):
+                print("Error: Position out of bounds for event scenario.")
+                return None
 
-        if etype is EventType.BOMB_PLANTED:
-            cfg = self.bomb_cfg
-        elif etype is EventType.ALLY_DOWN:
-            cfg = self.ally_cfg
+            event = Event(
+                name=event_info["name"],
+                position=event_info["position"],
+                radius=event_info["radius"],
+                magnitude=event_info["magnitude"],
+                ttl=event_info["ttl"],
+            )
+
         else:
-            cfg = self.enemy_cfg
+            r = random.random()
+            # print(f"random={r} spawn_prob={self.spawn_prob}")
+            if  r > self.spawn_prob:
+                return None
 
-        ev = Event(
-            type=etype,
-            position=pos,
-            radius=int(cfg.get("radius", 3)),
-            magnitude=float(cfg.get("magnitude", -2.0)),
-            ttl=int(cfg.get("ttl", 5)),
-        )
-        self.active.append(ev)
-        return ev
+            pos = self._random_free_cell(map_arr)
+            if pos is None:
+                return None
+
+            # Choose an event template and deepcopy it so we don't mutate the template
+            event_template = random.choice(self.events)
+            event = copy.deepcopy(event_template)
+            event.position = pos
+        
+        self.active.append(event)  
+        return event
 
     def apply_events(self, idleness: np.ndarray) -> None:
         """Apply all active events to the idleness grid and decay their TTL.

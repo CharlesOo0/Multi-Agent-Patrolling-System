@@ -78,7 +78,7 @@ class Visualization:
         self.speed_dec_button: Button | None = None
         self.speed_inc_button: Button | None = None
         self._back_btn: Button | None = None
-        # Callback appelé quand l'utilisateur termine la simulation via le bouton
+        # Callback called when the user finishes the simulation via the button
         self.on_finish = None
         self.on_back = on_back
 
@@ -370,9 +370,9 @@ class Visualization:
             magnitude = float(ev.get("magnitude", 0.0))
             color = self.utils.RED if magnitude > 0 else self.utils.BLUE
             step = ev.get("step", 0)
-            etype = str(ev.get("type", "?")).replace("EventType.", "")
+            name = str(ev.get("name", "?"))
             pos = ev.get("position", ("-", "-"))
-            text = f"t{step}: {etype} ({magnitude:+.1f}) @ {pos}"
+            text = f"t{step}: {name} ({magnitude:+.1f}) @ {pos}"
             surf = log_font.render(text, True, color)
             if y + surf.get_height() <= self.logs_rect.bottom - 8:
                 self.screen.blit(surf, (self.logs_rect.left + 10, y))

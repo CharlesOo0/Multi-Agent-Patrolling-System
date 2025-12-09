@@ -7,7 +7,7 @@ from .button import Button
 
 
 class Stepper:
-    """Contrôle +/- pour ajuster une valeur numérique (int ou float)."""
+    """Plus/minus control to adjust a numeric value (int or float)."""
 
     def __init__(
         self,
@@ -36,8 +36,11 @@ class Stepper:
         self.btn_dec = Button(x, y, btn_w, height, "-", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self.btn_inc = Button(x + width - btn_w, y, btn_w, height, "+", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self.font = pygame.font.SysFont(None, 26)
+        self.disabled = False
 
     def _set_value(self, v: float) -> None:
+        if self.disabled:
+            return
         if self.min_value is not None:
             v = max(self.min_value, v)
         if self.max_value is not None:
@@ -48,6 +51,9 @@ class Stepper:
                 self.on_change(self.value)
 
     def handle_event(self, event: pygame.event.Event) -> None:
+        if self.disabled:
+            # Do not respond to input when disabled
+            return
         self.btn_dec.hover_property(event)
         self.btn_inc.hover_property(event)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -58,21 +64,32 @@ class Stepper:
                 self._set_value(self.value + self.step)
 
     def draw(self, surface: pygame.Surface) -> None:
-        # Cadre
-        pygame.draw.rect(surface, self.utils.LIGHT_GRAY, self.rect, border_radius=6)
-        pygame.draw.rect(surface, self.utils.BLACK, self.rect, 2, border_radius=6)
-        # Boutons
+        # Frame
+        if self.disabled:
+            bg = self.utils.LIGHT_GRAY
+            border_color = (160, 160, 160)
+        else:
+            bg = self.utils.LIGHT_GRAY
+            border_color = self.utils.BLACK
+        pygame.draw.rect(surface, bg, self.rect, border_radius=6)
+        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=6)
+        # Buttons (rendered but won't respond when disabled)
         self.btn_dec.draw(surface)
         self.btn_inc.draw(surface)
-        # Valeur
-        text = self.font.render(self.fmt.format(self.value), True, self.utils.BLACK)
+        # Value
+        text_color = (120, 120, 120) if self.disabled else self.utils.BLACK
+        text = self.font.render(self.fmt.format(self.value), True, text_color)
         tx = self.rect.centerx - text.get_width() // 2
         ty = self.rect.centery - text.get_height() // 2
         surface.blit(text, (tx, ty))
 
+    def set_disabled(self, disabled: bool) -> None:
+        """Enable or disable the control (visual + interaction)."""
+        self.disabled = bool(disabled)
+
 
 class CycleSelector:
-    """Sélecteur qui fait défiler une liste de valeurs (ex: algorithme, map)."""
+    """Selector that cycles through a list of values (e.g., algorithm, map)."""
 
     def __init__(
         self,
@@ -117,13 +134,13 @@ class CycleSelector:
                 self._notify()
 
     def draw(self, surface: pygame.Surface) -> None:
-        # Cadre
+        # Frame
         pygame.draw.rect(surface, self.utils.LIGHT_GRAY, self.rect, border_radius=6)
         pygame.draw.rect(surface, self.utils.BLACK, self.rect, 2, border_radius=6)
-        # Boutons
+        # Buttons
         self.btn_prev.draw(surface)
         self.btn_next.draw(surface)
-        # Valeur
+        # Value
         text = self.font.render(self.value, True, self.utils.BLACK)
         tx = self.rect.centerx - text.get_width() // 2
         ty = self.rect.centery - text.get_height() // 2

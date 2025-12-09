@@ -137,6 +137,29 @@ class SimPage(Page):
             self.viz.advance_sim_time_per_tick()
             self._sim_accum -= 1.0
 
+            # Automatic stop if time_limit is set (non-zero)
+            try:
+                time_limit = float(getattr(sim_config, "time_limit", 0.0))
+            except Exception:
+                time_limit = 0.0
+
+            if time_limit > 0.0 and getattr(self.viz, "sim_time", 0.0) >= time_limit:
+                # Call the finish handler to collect results
+                try:
+                    if callable(getattr(self.viz, "on_finish", None)):
+                        self.viz.on_finish()
+                except Exception:
+                    pass
+                # If a statistics callback was provided, assume viz.on_finish
+                # already forwarded results to it and avoid forcing navigation
+                # to home. Otherwise, go back to home.
+                try:
+                    if not callable(self.go_stats) and callable(self.go_home):
+                        self.go_home()
+                except Exception:
+                    pass
+                return
+
     def render(self, screen: pygame.Surface) -> None:
         if not (self.viz and self.algorithm):
             return

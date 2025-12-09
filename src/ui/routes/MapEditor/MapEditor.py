@@ -257,7 +257,7 @@ class MapEditorPage(Page):
 
                 i : int = int(y_rel // (self.CELL_SIZE + self.MARGIN))
                 j : int = int(x_rel // (self.CELL_SIZE + self.MARGIN))
-
+                print(f"Clicked cell: [{i}, {j}]")
                 if 0 <= i < self.map.shape[0] and 0 <= j < self.map.shape[1]:
                     self.map[i, j] = 0 if self.map[i, j] == 1 else 1
                     self._save_full_map_json(self._map_selector.value)
