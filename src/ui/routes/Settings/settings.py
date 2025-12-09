@@ -61,10 +61,12 @@ class SettingsPage(Page):
         row_h = 58
         ctrl_w = 360
         ctrl_h = 40
+        x_left = x0 + 220
+        x_right = x_left + ctrl_w + 40
 
         # Algorithm selector
         self._algo_selector = CycleSelector(
-            x0 + 220, y0, ctrl_w, ctrl_h,
+            x_left, y0, ctrl_w, ctrl_h,
             options=sim_config.algo_display_options(),
             value=sim_config.internal_to_display(sim_config.algorithm),
             on_change=self._on_algo_change,
@@ -72,70 +74,74 @@ class SettingsPage(Page):
 
         # Map selector
         self._map_selector = CycleSelector(
-            x0 + 220, y0 + row_h, ctrl_w, ctrl_h,
+            x_left, y0 + row_h, ctrl_w, ctrl_h,
             options=self._map_names,
             value=sim_config.map_name if sim_config.map_name in self._map_names else self._map_names[0],
             on_change=self._on_map_change,
         )
 
+        # Instance selector (placed below Map)
+        self._instance_selector = CycleSelector(
+            x_left, y0 + 2 * row_h, ctrl_w, ctrl_h,
+            options=sim_config.instance_manager.names(self._map_names[0]),
+            value=sim_config.instance_name,
+            on_change=self._on_instance_change,
+        )
+
         # Number of agents
         self._agents_stepper = Stepper(
-            x0 + 220, y0 + 2 * row_h, ctrl_w, ctrl_h,
+            x_left, y0 + 3 * row_h, ctrl_w, ctrl_h,
             value=float(sim_config.num_agents), step=1.0, min_value=1.0, max_value=50.0, fmt="{:.0f}",
             on_change=lambda v: self._set_num_agents(int(v)),
         )
 
         # Spawn rate (probability per step)
         self._spawn_stepper = Stepper(
-            x0 + 220, y0 + 3 * row_h, ctrl_w, ctrl_h,
+            x_left, y0 + 4 * row_h, ctrl_w, ctrl_h,
             value=float(sim_config.spawn_prob), step=0.01, min_value=0.0, max_value=1.0, fmt="{:.2f}",
             on_change=self._set_spawn_prob,
         )
 
         # Iddleness growth rate
         self._iddleness_stepper = Stepper(
-            x0 + 220, y0 + 4 * row_h, ctrl_w, ctrl_h,
+            x_left, y0 + 5 * row_h, ctrl_w, ctrl_h,
             value=float(sim_config.iddleness_growth), step=0.001, min_value=0.0, max_value=1.0, fmt="{:.3f}",
             on_change=self._set_iddleness_growth,
         )
         
-        # Agent instance selector
-        self._instance_selector = CycleSelector(
-            x0*11 + 220, y0, ctrl_w, ctrl_h,
-            options=sim_config.instance_manager.names(self._map_names[0]),
-            value=sim_config.instance_name,
-            on_change=self._on_instance_change,
-        )
-        
-
-        # ACO specific controls for AntColony and AntColonyLecture
+        # ACO specific controls placed on the right column
         aco = sim_config.algo_params.get("AntColony", {})
         aco = sim_config.algo_params.get("AntColonyLecture", {}) if not aco else aco
         self._aco_evap = Stepper(
-            x0 + 220, y0 + 5 * row_h, ctrl_w, ctrl_h,
+            x_right, y0 + 0 * row_h, ctrl_w, ctrl_h,
             value=float(aco.get("evaporation_rate", 0.1)), step=0.01, min_value=0.0, max_value=1.0, fmt="{:.2f}",
             on_change=lambda v: self._set_aco_param("evaporation_rate", float(v)),
         )
         self._aco_alpha = Stepper(
-            x0 + 220, y0 + 6 * row_h, ctrl_w, ctrl_h,
+            x_right, y0 + 1 * row_h, ctrl_w, ctrl_h,
             value=float(aco.get("alpha", 1.0)), step=0.1, min_value=0.0, max_value=5.0, fmt="{:.1f}",
             on_change=lambda v: self._set_aco_param("alpha", float(v)),
         )
         self._aco_beta = Stepper(
-            x0 + 220, y0 + 7 * row_h, ctrl_w, ctrl_h,
+            x_right, y0 + 2 * row_h, ctrl_w, ctrl_h,
             value=float(aco.get("beta", 2.0)), step=0.1, min_value=0.0, max_value=5.0, fmt="{:.1f}",
             on_change=lambda v: self._set_aco_param("beta", float(v)),
         )
         self._aco_exploration_rate = Stepper(
-            x0 + 220, y0 + 8 * row_h, ctrl_w, ctrl_h,
+            x_right, y0 + 3 * row_h, ctrl_w, ctrl_h,
             value=float(aco.get("exploration_rate", 0.15)), step=0.01, min_value=0.0, max_value=1.0, fmt="{:.2f}",
             on_change=lambda v: self._set_aco_param("exploration_rate", float(v)),
         )
         self._aco_tabu_length = Stepper(
-            x0 + 220, y0 + 9 * row_h, ctrl_w, ctrl_h,
+            x_right, y0 + 4 * row_h, ctrl_w, ctrl_h,
             value=float(aco.get("tabu_length", 15)), step=1.0, min_value=1.0, max_value=100.0, fmt="{:.0f}",
             on_change=lambda v: self._set_aco_param("tabu_length", int(v)),
         )
+        # Initialize disabled state according to currently selected instance
+        try:
+            self._on_instance_change(sim_config.instance_name)
+        except Exception:
+            pass
         self._ready = True
 
     def handle_event(self, event: pygame.event.Event) -> None:
@@ -177,50 +183,47 @@ class SettingsPage(Page):
         # Labels
         x0, y0 = 60, 150
         row_h = 58
+        ctrl_w = 360
+        x_left = x0 + 220
+        x_right = x_left + ctrl_w + 40
+        # Left column labels (instance placed below Map)
         labels = [
             ("Algorithm", y0),
             ("Map", y0 + row_h),
-            ("Number of Agents", y0 + 2 * row_h),
-            ("Events spawn rate (0-1)", y0 + 3 * row_h),
-            ("Idleness growth rate (0-1)", y0 + 4 * row_h),
-        ]
-        labels_second_row =[
-            ("Instance", y0 ),
+            ("Instance", y0 + 2 * row_h),
+            ("Number of Agents", y0 + 3 * row_h),
+            ("Events spawn rate (0-1)", y0 + 4 * row_h),
+            ("Idleness growth rate (0-1)", y0 + 5 * row_h),
         ]
         for text, y in labels:
             surf = self.small.render(text, True, self.utils.BLACK)
             screen.blit(surf, (x0, y + 8))
-            
-        for text, y in labels_second_row:
-            surf = self.small.render(text, True, self.utils.BLACK)
-            screen.blit(surf, (x0*11, y + 8))
 
         if self._algo_selector:
             self._algo_selector.draw(screen)
         if self._map_selector:
             self._map_selector.draw(screen)
+        if self._instance_selector:
+            self._instance_selector.draw(screen)
         if self._agents_stepper:
             self._agents_stepper.draw(screen)
         if self._spawn_stepper:
             self._spawn_stepper.draw(screen)
         if self._iddleness_stepper:
             self._iddleness_stepper.draw(screen)
-        if self._instance_selector:
-            self._instance_selector.draw(screen)
 
         # Section spécifique ACO
         if self._is_aco():
-            sec = self.small.render("", True, self.utils.BLACK)
-            screen.blit(sec, (x0, y0 + 5 * row_h - 8))
-            self._draw_label(screen, "Evaporation", x0, y0 + 5 * row_h)
-            self._draw_label(screen, "Alpha", x0, y0 + 6 * row_h)
-            self._draw_label(screen, "Beta", x0, y0 + 7 * row_h)
+            # Right column labels for algorithm-specific parameters
+            self._draw_label(screen, "Evaporation", x_right, y0 + 0 * row_h)
             self._aco_evap and self._aco_evap.draw(screen)
+            self._draw_label(screen, "Alpha", x_right, y0 + 1 * row_h)
             self._aco_alpha and self._aco_alpha.draw(screen)
+            self._draw_label(screen, "Beta", x_right, y0 + 2 * row_h)
             self._aco_beta and self._aco_beta.draw(screen)
-            self._draw_label(screen, "Exploration Rate", x0, y0 + 8 * row_h)
+            self._draw_label(screen, "Exploration Rate", x_right, y0 + 3 * row_h)
             self._aco_exploration_rate and self._aco_exploration_rate.draw(screen)
-            self._draw_label(screen, "Tabu Length", x0, y0 + 9 * row_h)
+            self._draw_label(screen, "Tabu Length", x_right, y0 + 4 * row_h)
             self._aco_tabu_length and self._aco_tabu_length.draw(screen)
 
         if self._btn_back:
@@ -248,6 +251,17 @@ class SettingsPage(Page):
                 # update UI control if exists
                 if self._iddleness_stepper:
                     self._iddleness_stepper.value = float(sim_config.iddleness_growth)
+            # Disable steppers that are governed by the instance
+            if self._agents_stepper:
+                self._agents_stepper.set_disabled(True)
+            if self._iddleness_stepper:
+                self._iddleness_stepper.set_disabled(True)
+        else:
+            # No instance selected: allow editing
+            if self._agents_stepper:
+                self._agents_stepper.set_disabled(False)
+            if self._iddleness_stepper:
+                self._iddleness_stepper.set_disabled(False)
     
     
     def _on_algo_change(self, name: str) -> None:

@@ -36,8 +36,11 @@ class Stepper:
         self.btn_dec = Button(x, y, btn_w, height, "-", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self.btn_inc = Button(x + width - btn_w, y, btn_w, height, "+", self.utils.GRAY, self.utils.LIGHT_GRAY)
         self.font = pygame.font.SysFont(None, 26)
+        self.disabled = False
 
     def _set_value(self, v: float) -> None:
+        if self.disabled:
+            return
         if self.min_value is not None:
             v = max(self.min_value, v)
         if self.max_value is not None:
@@ -48,6 +51,9 @@ class Stepper:
                 self.on_change(self.value)
 
     def handle_event(self, event: pygame.event.Event) -> None:
+        if self.disabled:
+            # Do not respond to input when disabled
+            return
         self.btn_dec.hover_property(event)
         self.btn_inc.hover_property(event)
         if event.type == pygame.MOUSEBUTTONDOWN and event.button == 1:
@@ -59,16 +65,27 @@ class Stepper:
 
     def draw(self, surface: pygame.Surface) -> None:
         # Cadre
-        pygame.draw.rect(surface, self.utils.LIGHT_GRAY, self.rect, border_radius=6)
-        pygame.draw.rect(surface, self.utils.BLACK, self.rect, 2, border_radius=6)
-        # Boutons
+        if self.disabled:
+            bg = self.utils.LIGHT_GRAY
+            border_color = (160, 160, 160)
+        else:
+            bg = self.utils.LIGHT_GRAY
+            border_color = self.utils.BLACK
+        pygame.draw.rect(surface, bg, self.rect, border_radius=6)
+        pygame.draw.rect(surface, border_color, self.rect, 2, border_radius=6)
+        # Boutons (render but they won't respond when disabled)
         self.btn_dec.draw(surface)
         self.btn_inc.draw(surface)
         # Valeur
-        text = self.font.render(self.fmt.format(self.value), True, self.utils.BLACK)
+        text_color = (120, 120, 120) if self.disabled else self.utils.BLACK
+        text = self.font.render(self.fmt.format(self.value), True, text_color)
         tx = self.rect.centerx - text.get_width() // 2
         ty = self.rect.centery - text.get_height() // 2
         surface.blit(text, (tx, ty))
+
+    def set_disabled(self, disabled: bool) -> None:
+        """Enable or disable the control (visual + interaction)."""
+        self.disabled = bool(disabled)
 
 
 class CycleSelector:
