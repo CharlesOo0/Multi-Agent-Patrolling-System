@@ -371,27 +371,27 @@ class SettingsPage(Page):
             self._iddleness_stepper.draw(content_surf)
 
         # ------- ALGO PARAMETERS (section sous Environment) -------
-        # Algo parameters already retrieved above for content height
-        if not algo_params:
-            no_txt = self.small.render("No alg. parameters available", True, self.utils.BLACK)
-            content_surf.blit(no_txt, (x_left, alg_y0))
+        # Algo parameters: always show ACO controls when ACO selected
+        if self._is_aco():
+            # ACO : labels placed in the left column (x0) to avoid overlap with controls
+            self._draw_label(content_surf, "Evaporation", x0, alg_y0 + 0 * row_h)
+            self._aco_evap and self._aco_evap.draw(content_surf)
+
+            self._draw_label(content_surf, "Alpha", x0, alg_y0 + 1 * row_h)
+            self._aco_alpha and self._aco_alpha.draw(content_surf)
+
+            self._draw_label(content_surf, "Beta", x0, alg_y0 + 2 * row_h)
+            self._aco_beta and self._aco_beta.draw(content_surf)
+
+            self._draw_label(content_surf, "Exploration Rate", x0, alg_y0 + 3 * row_h)
+            self._aco_exploration_rate and self._aco_exploration_rate.draw(content_surf)
+
+            self._draw_label(content_surf, "Tabu Length", x0, alg_y0 + 4 * row_h)
+            self._aco_tabu_length and self._aco_tabu_length.draw(content_surf)
         else:
-            if self._is_aco():
-                # ACO : steppers + labels alignés verticalement à partir de alg_y0
-                self._draw_label(content_surf, "Evaporation (pheromone decay)", x_left, alg_y0 + 0 * row_h)
-                self._aco_evap and self._aco_evap.draw(content_surf)
-
-                self._draw_label(content_surf, "Alpha (pheromone weight)", x_left, alg_y0 + 1 * row_h)
-                self._aco_alpha and self._aco_alpha.draw(content_surf)
-
-                self._draw_label(content_surf, "Beta (heuristic weight)", x_left, alg_y0 + 2 * row_h)
-                self._aco_beta and self._aco_beta.draw(content_surf)
-
-                self._draw_label(content_surf, "Exploration Rate (randomness)", x_left, alg_y0 + 3 * row_h)
-                self._aco_exploration_rate and self._aco_exploration_rate.draw(content_surf)
-
-                self._draw_label(content_surf, "Tabu Length (memory)", x_left, alg_y0 + 4 * row_h)
-                self._aco_tabu_length and self._aco_tabu_length.draw(content_surf)
+            if not algo_params:
+                no_txt = self.small.render("No alg. parameters available", True, self.utils.BLACK)
+                content_surf.blit(no_txt, (x_left, alg_y0))
             else:
                 # Générique : simple liste label + valeur
                 i = 0
