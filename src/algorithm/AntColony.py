@@ -17,6 +17,8 @@ class AntColony(Algorithm):
         evaporation_rate=0.1,
         alpha=1,
         beta=2,
+        exploration_rate=0.15,
+        tabu_length=15,
         **kwargs
     ):
         """Initialize the ACO algorithm state.
@@ -32,6 +34,8 @@ class AntColony(Algorithm):
         self.evaporation_rate = evaporation_rate
         self.alpha = alpha
         self.beta = beta
+        self.exploration_rate = exploration_rate
+        self.tabu_length = tabu_length
         self.pheromone = np.ones(map.shape)
         self.agentswork = [0.0 for _ in range(num_agents)]
 
@@ -65,7 +69,7 @@ class AntColony(Algorithm):
 
             # Update tabu list for the agent
             self.tabu_lists[i].append(pos)
-            if len(self.tabu_lists[i]) > 5:
+            if len(self.tabu_lists[i]) > self.tabu_length:
                 self.tabu_lists[i].pop(0)
 
         # Finally evaporate/add noise to pheromones
