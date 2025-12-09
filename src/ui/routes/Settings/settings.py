@@ -331,7 +331,7 @@ class SettingsPage(Page):
 
         w, h = screen.get_size()
 
-        # Estimate content height based on layout and algorithm parameter rows
+        # Estimate content height based on layout, algorithm parameter rows and instance event rows
         algo_key = sim_config.algorithm
         algo_params = sim_config.algo_params.get(algo_key, {})
         if self._is_aco():
@@ -339,7 +339,18 @@ class SettingsPage(Page):
         else:
             algo_rows = max(1, len(algo_params)) if algo_params else 1
 
-        content_height = alg_y0 + algo_rows * row_h + 120
+        # Count event appearance rows for the selected instance (if any)
+        event_rows = 0
+        try:
+            inst_name = getattr(sim_config, "instance_name", None)
+            if inst_name and inst_name != "no instance":
+                inst_obj = sim_config.instance_manager.get(inst_name)
+                if inst_obj and getattr(inst_obj, "event_appearance_list", None):
+                    event_rows = max(0, len(inst_obj.event_appearance_list))
+        except Exception:
+            event_rows = 0
+
+        content_height = alg_y0 + max(algo_rows, event_rows) * row_h + 120
         content_height = max(content_height, h)
         self._content_height = content_height
 
@@ -421,6 +432,56 @@ class SettingsPage(Page):
                     txt = self.small.render(value_text, True, self.utils.BLACK)
                     content_surf.blit(txt, (x_left + ctrl_w + 20, y + 8))
                     i += 1
+                # (Events rendering moved below so it's shown for all algos)
+
+        # Render instance event appearances (right column) for any algorithm
+        try:
+            inst_name = getattr(sim_config, "instance_name", None)
+            if inst_name and inst_name != "no instance":
+                inst_obj = sim_config.instance_manager.get(inst_name)
+                raw_events = getattr(inst_obj, "event_appearance_list", None) or {}
+                if raw_events:
+                    # Header
+                    ev_hdr = hdr_font.render("Event Appearances", True, self.utils.BLACK)
+                    ev_x = x_left + ctrl_w + 20
+                    content_surf.blit(ev_hdr, (ev_x, y0 - 32))
+
+                    # Sort items by numeric step when possible
+                    try:
+                        sorted_items = sorted(raw_events.items(), key=lambda kv: int(kv[0]))
+                    except Exception:
+                        sorted_items = list(raw_events.items())
+
+                    ev_y = y0
+                    for step_key, info in sorted_items:
+                        try:
+                            step = int(step_key)
+                        except Exception:
+                            step = step_key
+
+                        parts = []
+                        if isinstance(info, dict):
+                            name = info.get("name") or info.get("label")
+                            if name:
+                                parts.append(f"{name}")
+                            pos = info.get("position")
+                            if pos:
+                                parts.append(f"pos={tuple(pos)}")
+                            if "radius" in info:
+                                parts.append(f"r={info.get('radius')}")
+                            if "magnitude" in info:
+                                parts.append(f"mag={info.get('magnitude')}")
+                            if "ttl" in info:
+                                parts.append(f"ttl={info.get('ttl')}")
+                        else:
+                            parts.append(str(info))
+
+                        ev_text = f"Step {step}: " + ", ".join(parts) if parts else f"Step {step}"
+                        ev_surf = self.small.render(ev_text, True, self.utils.BLACK)
+                        content_surf.blit(ev_surf, (ev_x, ev_y + 8))
+                        ev_y += row_h
+        except Exception:
+            pass
 
         if self._btn_back:
             self._btn_back.draw(content_surf)
