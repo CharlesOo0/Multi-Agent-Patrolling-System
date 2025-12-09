@@ -18,8 +18,10 @@ class SimConfig:
     num_agents: int = 4
     spawn_prob: float = 0.05
     iddleness_growth: float = 0.05
-    instance_name:str ="no instance"
-    instance_manager= InstanceManager()
+    # Time limit in seconds for the simulation; 0 means no automatic stop
+    time_limit: float = 0.0
+    instance_name: str = "no instance"
+    instance_manager: InstanceManager = InstanceManager()
 
     # Paramètres spécifiques aux algorithmes
     algo_params: Dict[str, Any] = field(

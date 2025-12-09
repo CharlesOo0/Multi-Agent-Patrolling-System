@@ -24,6 +24,8 @@ class Instance:
     map_name: str
     idleness_growth: float = 0.05
     event_appearance_list: Optional[Dict[int, Dict]] = None
+    # Time limit in seconds for this instance; 0 means no limit
+    time_limit: float = 0.0
 
 
 class InstanceManager:
@@ -83,6 +85,7 @@ class InstanceManager:
                     map_name=item.get("map_name", ""),
                     idleness_growth=float(item.get("idleness_growth", item.get("iddleness_growth", 0.05))),
                     event_appearance_list=item.get("event_appearance_list", None),
+                    time_limit=float(item.get("time_limit", item.get("timeLimit", 0.0))),
                 )
                 parsed.append(inst)
             except Exception:
@@ -106,6 +109,7 @@ class InstanceManager:
                 "map_name": inst.map_name,
                 "idleness_growth": inst.idleness_growth,
                 "event_appearance_list": inst.event_appearance_list,
+                "time_limit": inst.time_limit,
             }
             for inst in self.instances
         ]}

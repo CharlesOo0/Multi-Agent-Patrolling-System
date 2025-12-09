@@ -26,6 +26,7 @@ class SettingsPage(Page):
         self._agents_stepper: Stepper | None = None
         self._spawn_stepper: Stepper | None = None
         self._iddleness_stepper: Stepper | None = None
+        self._time_limit_stepper: Stepper | None = None
 
         # Algo-specific controls (ACO)
         self._aco_evap: Stepper | None = None
@@ -150,6 +151,18 @@ class SettingsPage(Page):
             max_value=1.0,
             fmt="{:.3f}",
             on_change=self._set_iddleness_growth,
+        )
+        y += row_h
+
+        # Time limit (seconds). 0 means no automatic stop
+        self._time_limit_stepper = Stepper(
+            x_left, y, ctrl_w, ctrl_h,
+            value=float(getattr(sim_config, "time_limit", 0.0)),
+            step=5.0,
+            min_value=0.0,
+            max_value=86400.0,
+            fmt="{:.0f}",
+            on_change=lambda v: self._set_time_limit(int(v)),
         )
         y += row_h
 
@@ -291,6 +304,8 @@ class SettingsPage(Page):
             self._spawn_stepper.handle_event(f_event)
         if self._iddleness_stepper:
             self._iddleness_stepper.handle_event(f_event)
+        if self._time_limit_stepper:
+            self._time_limit_stepper.handle_event(f_event)
 
         if self._is_aco():
             self._aco_evap and self._aco_evap.handle_event(f_event)
@@ -342,6 +357,7 @@ class SettingsPage(Page):
             "Number of Agents",
             "Events spawn rate (0-1)",
             "Idleness growth rate (0-1)",
+            "Time limit (s, 0 = no limit)",
         ]
         for i, text in enumerate(default_labels):
             y = y0 + i * row_h
@@ -369,6 +385,8 @@ class SettingsPage(Page):
             self._spawn_stepper.draw(content_surf)
         if self._iddleness_stepper:
             self._iddleness_stepper.draw(content_surf)
+        if self._time_limit_stepper:
+            self._time_limit_stepper.draw(content_surf)
 
         # ------- ALGO PARAMETERS (section sous Environment) -------
         # Algo parameters: always show ACO controls when ACO selected
@@ -451,6 +469,11 @@ class SettingsPage(Page):
                 if self._iddleness_stepper:
                     self._iddleness_stepper.value = float(sim_config.iddleness_growth)
 
+                # Apply instance-specific time limit if present
+                sim_config.time_limit = float(getattr(inst, "time_limit", getattr(sim_config, "time_limit", 0.0)))
+                if self._time_limit_stepper:
+                    self._time_limit_stepper.value = float(sim_config.time_limit)
+
             # Disable steppers that are governed by the instance
             if self._agents_stepper:
                 self._agents_stepper.set_disabled(True)
@@ -458,6 +481,8 @@ class SettingsPage(Page):
                 self._iddleness_stepper.set_disabled(True)
             if self._spawn_stepper:
                 self._spawn_stepper.set_disabled(True)
+            if self._time_limit_stepper:
+                self._time_limit_stepper.set_disabled(True)
         else:
             # No instance selected: allow editing
             if self._agents_stepper:
@@ -466,6 +491,8 @@ class SettingsPage(Page):
                 self._iddleness_stepper.set_disabled(False)
             if self._spawn_stepper:
                 self._spawn_stepper.set_disabled(False)
+            if self._time_limit_stepper:
+                self._time_limit_stepper.set_disabled(False)
 
     def _on_algo_change(self, name: str) -> None:
         sim_config.algorithm = sim_config.display_to_internal(name)
@@ -497,3 +524,7 @@ class SettingsPage(Page):
 
     def _set_iddleness_growth(self, v: float) -> None:
         sim_config.iddleness_growth = max(0.0, min(1.0, float(v)))
+
+    def _set_time_limit(self, v: float) -> None:
+        # time limit in seconds; 0 means disabled
+        sim_config.time_limit = max(0.0, float(v))

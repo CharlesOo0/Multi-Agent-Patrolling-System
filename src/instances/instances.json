@@ -28,7 +28,8 @@
                 "10": { "name": "Bomb planted", "position": [10, 10], "radius": 3, "magnitude": 2.0, "ttl": 5 },
                 "20": { "name": "Ennemy spotted", "position": [15, 15], "radius": 2, "magnitude": -1.5, "ttl": 8 },
                 "30": { "name": "Ally down", "position": [5, 20], "radius": 4, "magnitude": 2.5, "ttl": 6 }
-            }
+            },
+            "time_limit": 120.0
         },
         {
             "name": "coin",
