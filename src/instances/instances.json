@@ -1,102 +1,145 @@
+
 {
     "instance": [
         {
-            "name": "Instance chill Dust2",
-            "id": 0,
+            "name": "agents:1/events:2/idle:1",
+            "id": 1,
             "nb_agent": 4,
-            "position": [
-                [
-                    25,
-                    12
-                ],
-                [
-                    12,
-                    1
-                ],
-                [
-                    5,
-                    15
-                ],
-                [
-                    21,
-                    3
-                ]
-            ],
+            "position": [[3, 4], [4, 21], [26, 8], [26, 12]],
+            "map_name": "DUST2",
+            "idleness_growth": 0.025,
+            "event_appearance_list": {
+                "60": { "name": "Ennemy spotted", "position": [8, 12], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Bomb planted", "position": [4, 22], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "180": { "name": "Ennemy down", "position": [7, 18], "radius": 2, "magnitude": -1.5, "ttl": 8 },
+                "240": { "name": "Ally down", "position": [17, 23], "radius": 4, "magnitude": 2.5, "ttl": 2 }
+            },
+            "time_limit": 600.0
+        },
+        {
+            "name": "agents:1/events:3/idle:1",
+            "id": 2,
+            "nb_agent": 4,
+            "position": [[3, 4], [4, 21], [26, 8], [26, 12]],
+            "map_name": "DUST2",
+            "idleness_growth": 0.025,
+            "event_appearance_list": {
+                "40": { "name": "Ally down", "position": [8, 2], "radius": 4, "magnitude": 2.5, "ttl": 2 },
+                "60": { "name": "Ennemy spotted", "position": [8, 12], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Bomb planted", "position": [4, 22], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "150": { "name": "Ally down", "position": [15, 12], "radius": 4, "magnitude": 2.5, "ttl": 2 },
+                "180": { "name": "Ennemy down", "position": [7, 18], "radius": 2, "magnitude": -1.5, "ttl": 8 },
+                "240": { "name": "Ally down", "position": [17, 23], "radius": 4, "magnitude": 2.5, "ttl": 2 }
+            },
+            "time_limit": 600.0
+        },
+        {
+            "name": "agents:2/events:3/idle:2",
+            "id": 3,
+            "nb_agent": 8,
+            "position": [[3, 4], [4, 21], [26, 8], [26, 12], [10, 4], [9, 12], [26, 4], [26, 15]],
             "map_name": "DUST2",
             "idleness_growth": 0.05,
             "event_appearance_list": {
-                "10": { "name": "Bomb planted", "position": [10, 10], "radius": 3, "magnitude": 2.0, "ttl": 5 },
-                "20": { "name": "Ennemy spotted", "position": [15, 15], "radius": 2, "magnitude": -1.5, "ttl": 8 },
-                "30": { "name": "Ally down", "position": [5, 20], "radius": 4, "magnitude": 2.5, "ttl": 6 }
+                "40": { "name": "Ally down", "position": [8, 2], "radius": 4, "magnitude": 2.5, "ttl": 2 },
+                "60": { "name": "Ennemy spotted", "position": [8, 12], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Bomb planted", "position": [4, 22], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "150": { "name": "Ally down", "position": [15, 12], "radius": 4, "magnitude": 2.5, "ttl": 2 },
+                "180": { "name": "Ennemy down", "position": [7, 18], "radius": 2, "magnitude": -1.5, "ttl": 8 },
+                "240": { "name": "Ally down", "position": [17, 23], "radius": 4, "magnitude": 2.5, "ttl": 2 }
             },
-            "time_limit": 120.0
+            "time_limit": 600.0
         },
+
+
         {
-            "name": "coin",
-            "id": 1,
+            "name": "agents:1/events:2/idle:1",
+            "id": 4,
             "nb_agent": 4,
-            "position": [
-                [
-                    5,
-                    5
-                ],
-                [
-                    5,
-                    4
-                ],
-                [
-                    4,
-                    4
-                ],
-                [
-                    4,
-                    5
-                ]
-            ],
-            "map_name": "DUST2",
-            "idleness_growth": 0.05
+            "position": [[26, 4], [23, 10], [9, 17], [9, 25]],
+            "map_name": "Inferno",
+            "idleness_growth": 0.025,
+            "event_appearance_list": {
+                "80": { "name": "Ennemy spotted", "position": [28, 21], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Bomb planted", "position": [7, 17], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "180": { "name": "Ennemy spotted", "position": [21, 16], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "240": { "name": "Bomb planted", "position": [25, 31], "radius": 3, "magnitude": 4.0, "ttl": 5 }
+            },
+            "time_limit": 600.0
         },
         {
-            "name": "str2",
-            "id": 2,
-            "nb_agent": 4,
-            "position": [
-                [
-                    25,
-                    12
-                ],
-                [
-                    12,
-                    1
-                ],
-                [
-                    5,
-                    15
-                ],
-                [
-                    21,
-                    3
-                ]
-            ],
-            "map_name": "test",
-            "idleness_growth": 0.03
+            "name": "agents:2/events:2/idle:1",
+            "id": 4,
+            "nb_agent": 8,
+            "position": [[26, 4], [23, 10], [28, 10], [23, 17], [9, 17], [9, 25], [6, 26], [30, 31]],
+            "map_name": "Inferno",
+            "idleness_growth": 0.025,
+            "event_appearance_list": {
+                "80": { "name": "Ennemy spotted", "position": [28, 21], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Bomb planted", "position": [7, 17], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "180": { "name": "Ennemy spotted", "position": [21, 16], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "240": { "name": "Bomb planted", "position": [25, 31], "radius": 3, "magnitude": 4.0, "ttl": 5 }
+            },
+            "time_limit": 600.0
         },
         {
-            "name": "name",
-            "id": 5,
-            "nb_agent": 2,
-            "position": [
-                [
-                    4,
-                    5
-                ],
-                [
-                    6,
-                    7
-                ]
-            ],
-            "map_name": "test",
-            "idleness_growth": 0.02
+            "name": "agents:2/events:2/idle:2",
+            "id": 4,
+            "nb_agent": 8,
+            "position": [[26, 4], [23, 10], [28, 10], [23, 17], [9, 17], [9, 25], [6, 26], [30, 31]],
+            "map_name": "Inferno",
+            "idleness_growth": 0.05,
+            "event_appearance_list": {
+                "80": { "name": "Ennemy spotted", "position": [28, 21], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Bomb planted", "position": [7, 17], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "180": { "name": "Ennemy spotted", "position": [21, 16], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "240": { "name": "Bomb planted", "position": [25, 31], "radius": 3, "magnitude": 4.0, "ttl": 5 }
+            },
+            "time_limit": 600.0
+        },
+
+        {
+            "name": "agents:1.5/events:1/idle:1",
+            "id": 4,
+            "nb_agent": 8,
+            "position": [[6, 5], [24, 8], [26, 19], [27, 24], [14, 32], [3, 19]],
+            "map_name": "Mirage",
+            "idleness_growth": 0.025,
+            "event_appearance_list": {
+                "80": { "name": "Ennemy spotted", "position": [13, 18], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "240": { "name": "Ally down", "position": [24, 9], "radius": 3, "magnitude": 4.0, "ttl": 5 }
+            },
+            "time_limit": 600.0
+        },
+        {
+            "name": "agents:2/events:2/idle:1",
+            "id": 4,
+            "nb_agent": 8,
+            "position": [[6, 5], [24, 8], [13, 13], [26, 19], [27, 24], [14, 32], [12, 25], [3, 19]],
+            "map_name": "Mirage",
+            "idleness_growth": 0.025,
+            "event_appearance_list": {
+                "80": { "name": "Ennemy spotted", "position": [13, 18], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Ally down", "position": [6, 5], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "180": { "name": "Ennemy spotted", "position": [23, 19], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "240": { "name": "Ally down", "position": [24, 9], "radius": 3, "magnitude": 4.0, "ttl": 5 }
+            },
+            "time_limit": 600.0
+        },
+        {
+            "name": "agents:2/events:2/idle:2",
+            "id": 4,
+            "nb_agent": 8,
+            "position": [[6, 5], [24, 8], [13, 13], [26, 19], [27, 24], [14, 32], [12, 25], [3, 19]],
+            "map_name": "Mirage",
+            "idleness_growth": 0.05,
+            "event_appearance_list": {
+                "80": { "name": "Ennemy spotted", "position": [13, 18], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "120": { "name": "Ally down", "position": [6, 5], "radius": 3, "magnitude": 4.0, "ttl": 5 },
+                "180": { "name": "Ennemy spotted", "position": [23, 19], "radius": 2, "magnitude": 1.5, "ttl": 8 },
+                "240": { "name": "Ally down", "position": [24, 9], "radius": 3, "magnitude": 4.0, "ttl": 5 }
+            },
+            "time_limit": 600.0
         }
     ]
 }

@@ -23,12 +23,7 @@ echo "Using Python command: $PYTHON_CMD"
 "$PYTHON_CMD" --version || true
 
 echo "Creating virtual environment..."
-if [[ "$PYTHON_CMD" == "py" ]]; then
-    # Prefer Python 3 with the Windows launcher
-    py -3 -m venv venv
-else
-    "$PYTHON_CMD" -m venv venv
-fi
+"$PYTHON_CMD" -m venv venv
 
 echo "Activating virtual environment..."
 # Windows (Git Bash/Cygwin) vs Linux/Mac

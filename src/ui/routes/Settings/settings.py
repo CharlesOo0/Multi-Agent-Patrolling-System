@@ -108,7 +108,9 @@ class SettingsPage(Page):
         try:
             inst_opts = sim_config.instance_manager.names(map_value)
         except Exception:
-            inst_opts = ["no instance"]
+            inst_opts = []
+
+        inst_opts.insert(0, "no instance")
 
         self._instance_selector = CycleSelector(
             x_left, y, ctrl_w, ctrl_h,
@@ -603,6 +605,10 @@ class SettingsPage(Page):
 
     def _on_algo_change(self, name: str) -> None:
         sim_config.algorithm = sim_config.display_to_internal(name)
+        sim_config.instance_name = "no instance"
+        if self._instance_selector:
+            print("instance")
+            self._instance_selector.index = 0
 
     def _on_map_change(self, name: str) -> None:
         sim_config.map_name = name
@@ -610,7 +616,9 @@ class SettingsPage(Page):
         try:
             new_opts = sim_config.instance_manager.names(name)
         except Exception:
-            new_opts = ["no instance"]
+            new_opts = []
+
+        new_opts.insert(0, "no instance")
 
         if self._instance_selector:
             self._instance_selector.options = new_opts
