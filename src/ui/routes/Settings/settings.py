@@ -445,41 +445,87 @@ class SettingsPage(Page):
                     ev_hdr = hdr_font.render("Event Appearances", True, self.utils.BLACK)
                     ev_x = x_left + ctrl_w + 20
                     content_surf.blit(ev_hdr, (ev_x, y0 - 32))
-
                     # Sort items by numeric step when possible
                     try:
                         sorted_items = sorted(raw_events.items(), key=lambda kv: int(kv[0]))
                     except Exception:
                         sorted_items = list(raw_events.items())
 
+                    # Panel layout for event list
                     ev_y = y0
-                    for step_key, info in sorted_items:
+                    ev_x = x_left + ctrl_w + 20
+                    panel_x = ev_x - 12
+                    panel_w = max(200, w - panel_x - 40)
+                    panel_padding = 8
+                    items_count = max(1, len(sorted_items))
+                    panel_h = items_count * row_h + panel_padding * 2
+
+                    # Background panel
+                    panel_rect = pygame.Rect(panel_x, ev_y - panel_padding, panel_w, panel_h)
+                    pygame.draw.rect(content_surf, (245, 245, 245), panel_rect, border_radius=8)
+                    pygame.draw.rect(content_surf, self.utils.LIGHT_GRAY, panel_rect, width=1, border_radius=8)
+
+                    # Draw each event row with a small icon and details, alternate row shading
+                    row_x = panel_x + panel_padding
+                    row_y = ev_y
+                    icon_radius = 7
+                    text_x = row_x + icon_radius * 2 + 8
+
+                    for i, (step_key, info) in enumerate(sorted_items):
                         try:
                             step = int(step_key)
                         except Exception:
                             step = step_key
 
-                        parts = []
+                        # Alternate subtle background for readability
+                        row_rect = pygame.Rect(row_x, row_y + i * row_h, panel_w - panel_padding * 2, row_h)
+                        if i % 2 == 0:
+                            pygame.draw.rect(content_surf, (250, 250, 250), row_rect)
+
+                        # Determine icon color from info (magnitude -> stronger color)
+                        icon_color = (100, 140, 220)
+                        try:
+                            if isinstance(info, dict) and "magnitude" in info:
+                                mag = float(info.get("magnitude", 0.0))
+                                intensity = max(0, min(1.0, mag / 10.0))
+                                blue = 120 + int(135 * intensity)
+                                icon_color = (80, 120, blue)
+                        except Exception:
+                            pass
+
+                        # Draw icon (circle)
+                        icon_center = (row_x + icon_radius + 2, row_y + i * row_h + row_h // 2)
+                        pygame.draw.circle(content_surf, icon_color, icon_center, icon_radius)
+                        pygame.draw.circle(content_surf, self.utils.LIGHT_GRAY, icon_center, icon_radius, width=1)
+
+                        # Compose text lines: title and small meta
+                        title_parts = []
+                        meta_parts = []
                         if isinstance(info, dict):
                             name = info.get("name") or info.get("label")
                             if name:
-                                parts.append(f"{name}")
+                                title_parts.append(str(name))
                             pos = info.get("position")
                             if pos:
-                                parts.append(f"pos={tuple(pos)}")
+                                meta_parts.append(f"pos={tuple(pos)}")
                             if "radius" in info:
-                                parts.append(f"r={info.get('radius')}")
+                                meta_parts.append(f"r={info.get('radius')}")
                             if "magnitude" in info:
-                                parts.append(f"mag={info.get('magnitude')}")
+                                meta_parts.append(f"mag={info.get('magnitude')}")
                             if "ttl" in info:
-                                parts.append(f"ttl={info.get('ttl')}")
+                                meta_parts.append(f"ttl={info.get('ttl')}")
                         else:
-                            parts.append(str(info))
+                            title_parts.append(str(info))
 
-                        ev_text = f"Step {step}: " + ", ".join(parts) if parts else f"Step {step}"
-                        ev_surf = self.small.render(ev_text, True, self.utils.BLACK)
-                        content_surf.blit(ev_surf, (ev_x, ev_y + 8))
-                        ev_y += row_h
+                        title_text = f"Step {step}: " + (" - ".join(title_parts) if title_parts else "")
+                        meta_text = ", ".join(meta_parts)
+
+                        # Render and blit
+                        title_surf = self.small.render(title_text, True, self.utils.BLACK)
+                        content_surf.blit(title_surf, (text_x, row_y + i * row_h + 6))
+                        if meta_text:
+                            meta_surf = self.small.render(meta_text, True, (100, 100, 100))
+                            content_surf.blit(meta_surf, (text_x, row_y + i * row_h + 26))
         except Exception:
             pass
 
