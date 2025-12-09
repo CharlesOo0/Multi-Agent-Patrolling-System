@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Dict
 from pathlib import Path
 import json
 
@@ -14,15 +14,16 @@ class Instance:
     - nb_agent: Number of agents to spawn for this instance
     - position: List of (x, y) tuples for agent spawn positions
     - map_name: Name of the map this instance belongs to
-    - event_type: Event type string (kept for compatibility)
+    - idleness_growth: Growth rate of idleness for this instance
+    - event_appearance_list: Optional list of (step to appear, position) tuples for event appearances
     """
     name: str
     id: int
     nb_agent: int
     position: List[Tuple[int, int]]
     map_name: str
-    event_type: str
     idleness_growth: float = 0.05
+    event_appearance_list: Optional[Dict[int, Dict]] = None
 
 
 class InstanceManager:
@@ -71,6 +72,7 @@ class InstanceManager:
 
         parsed: List[Instance] = []
         for item in raw_list:
+            print(item)
             try:
                 positions = [tuple(p) for p in item.get("position", [])]
                 inst = Instance(
@@ -79,8 +81,8 @@ class InstanceManager:
                     nb_agent=int(item.get("nb_agent", 0)),
                     position=positions,
                     map_name=item.get("map_name", ""),
-                    event_type=item.get("event_type", ""),
                     idleness_growth=float(item.get("idleness_growth", item.get("iddleness_growth", 0.05))),
+                    event_appearance_list=item.get("event_appearance_list", None),
                 )
                 parsed.append(inst)
             except Exception:
@@ -102,8 +104,8 @@ class InstanceManager:
                 "nb_agent": inst.nb_agent,
                 "position": [list(p) for p in inst.position],
                 "map_name": inst.map_name,
-                "event_type": inst.event_type,
                 "idleness_growth": inst.idleness_growth,
+                "event_appearance_list": inst.event_appearance_list,
             }
             for inst in self.instances
         ]}

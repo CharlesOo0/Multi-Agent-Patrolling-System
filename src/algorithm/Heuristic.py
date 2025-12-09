@@ -55,13 +55,13 @@ class Heuristic(Algorithm):
         self.clusters = self._map_clustering()
 
         # Log basic cluster assignment (helpful for debugging)
-        for cluster, agent_idx in zip(self.clusters, range(self.num_agents)):
-            print(f"Agent {agent_idx} assigned to cluster with {len(cluster)} cells.")
-            print(cluster)
+        # for cluster, agent_idx in zip(self.clusters, range(self.num_agents)):
+            # print(f"Agent {agent_idx} assigned to cluster with {len(cluster)} cells.")
+            # print(cluster)
 
         # Initialize agent positions: pick one representative cell per cluster
         # self.agents = [cluster[0] for cluster in self.clusters if cluster]
-        
+
         # Priority offset for prioritized planning (rotates each step to avoid starvation)
         self._priority_offset = 0
 

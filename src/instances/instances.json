@@ -1,7 +1,7 @@
 {
     "instance": [
         {
-            "name": "str",
+            "name": "Instance chill Dust2",
             "id": 0,
             "nb_agent": 4,
             "position": [
@@ -23,8 +23,12 @@
                 ]
             ],
             "map_name": "DUST2",
-            "event_type": "event_type",
-            "idleness_growth": 0.05
+            "idleness_growth": 0.05,
+            "event_appearance_list": {
+                "10": { "name": "Bomb planted", "position": [10, 10], "radius": 3, "magnitude": -2.0, "ttl": 5 },
+                "20": { "name": "Ennemy spotted", "position": [15, 15], "radius": 2, "magnitude": -1.5, "ttl": 8 },
+                "30": { "name": "Ally down", "position": [5, 20], "radius": 4, "magnitude": -2.5, "ttl": 6 }
+            }
         },
         {
             "name": "coin",
@@ -49,7 +53,6 @@
                 ]
             ],
             "map_name": "DUST2",
-            "event_type": "event_type",
             "idleness_growth": 0.05
         },
         {
@@ -75,7 +78,6 @@
                 ]
             ],
             "map_name": "test",
-            "event_type": "event_type",
             "idleness_growth": 0.03
         },
         {
@@ -93,7 +95,6 @@
                 ]
             ],
             "map_name": "test",
-            "event_type": "event_type",
             "idleness_growth": 0.02
         }
     ]

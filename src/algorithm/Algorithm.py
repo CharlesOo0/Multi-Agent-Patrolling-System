@@ -41,7 +41,10 @@ class Algorithm(ABC):
 
         # Events manager (CS:GO-like) to influence idleness each step
         # Scale spawn probability inverse to simulation speed so real-time rate stays stable
-        self.events = EventManager(spawn_prob=self.base_event_spawn_prob)
+        self.events = EventManager(
+            spawn_prob=self.base_event_spawn_prob, 
+            events_scenario=sim_config.instance_manager.get(sim_config.instance_name).event_appearance_list if sim_config.instance_name != "no instance" else None
+        )
 
         # Tracking variables
         self.step_count = 0
@@ -62,13 +65,13 @@ class Algorithm(ABC):
 
     def _run_event_step(self) -> None:
         """Handle event spawning and apply their effects on idleness."""
-        spawned = self.events.maybe_spawn_event(self.map)
+        spawned = self.events.maybe_spawn_event(self.map, self.step_count)
         if spawned is not None:
             # Log event with metadata
             self.event_history.append(
                 {
                     "step": self.step_count,
-                    "type": spawned.type,
+                    "name": spawned.name,
                     "position": spawned.position,
                     "magnitude": float(spawned.magnitude),
                     "radius": int(spawned.radius),
@@ -87,7 +90,7 @@ class Algorithm(ABC):
 
         total_free_cells = np.sum(self.map == 0)
         visited_cells_count = len(self.visited_cells)
-        print(visited_cells_count, total_free_cells)
+        # print(visited_cells_count, total_free_cells)
         self.total_coverage_history.append(
             visited_cells_count / total_free_cells if total_free_cells > 0 else 0.0
         )
@@ -104,7 +107,7 @@ class Algorithm(ABC):
                 else 0.0
             )
             self.coverage_by_agent_history[i].append(coverage)
-            print(f"Agent {i} coverage: {coverage:.3f}")
+            # print(f"Agent {i} coverage: {coverage:.3f}")
 
         for i in range(self.num_agents):
             # Sum idleness of the visited cells assigned to this agent this step
