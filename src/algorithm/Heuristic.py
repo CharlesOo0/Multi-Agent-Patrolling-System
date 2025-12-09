@@ -61,6 +61,7 @@ class Heuristic(Algorithm):
 
         # Initialize agent positions: pick one representative cell per cluster
         # self.agents = [cluster[0] for cluster in self.clusters if cluster]
+        
         # Priority offset for prioritized planning (rotates each step to avoid starvation)
         self._priority_offset = 0
 
@@ -339,9 +340,6 @@ class Heuristic(Algorithm):
                 # edge conflict (swap): if some earlier agent reserved edge cand->cur, disallow cur->cand
                 if (cand, cur) in reserved_edges:
                     continue
-
-                # If cand is occupied by another agent who has already been processed and reserved to stay, it's reserved_cells and rejected.
-                # If cand is occupied by an unprocessed agent, prioritized planning allows taking it (higher priority), assuming the other will replan.
 
                 # Accept candidate
                 chosen = cand
